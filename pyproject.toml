@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "northward"
+version = "0.1.0"
+description = "Northward: retirement planning with a year-by-year engine and Monte Carlo simulation"
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "alembic>=1.13,<2",
+    "fastapi>=0.115,<1",
+    "numpy>=2.2,<3",
+    "pydantic>=2.11,<3",
+    "pyyaml>=6.0,<7",
+    "ruamel.yaml>=0.18,<0.19",
+    "sqlalchemy>=2.0,<2.1",
+    "uvicorn>=0.30,<1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "httpx2>=2.14,<3",  # FastAPI's TestClient
+    "jsonschema>=4.23,<5",  # checks the editor's JSON Schemas accept the committed documents
+    "pytest>=8.3,<9",
+    "ruff>=0.14,<0.17",
+]
+
+[project.scripts]
+northward = "northward.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["backend"]
+
+[tool.setuptools.package-data]
+# Alembic loads migrations by path; they aren't packages.
+northward = ["persistence/migrations/*.py", "persistence/migrations/*.mako", "persistence/migrations/versions/*.py"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --import-mode=importlib"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["backend", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+# Line length is enforced by `ruff format`; long string literals it can't wrap are allowed.
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["northward", "tests"]

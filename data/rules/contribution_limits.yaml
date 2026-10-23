@@ -1,0 +1,72 @@
+# Annual contribution and election limits, tax year 2026.
+schema_version: 1
+
+metadata:
+  jurisdiction: US_Federal
+  base_year: 2026
+  description: "Retirement, HSA, dependent-care FSA, gift, and 529 rollover limits (verified 2026-09-29)."
+  sources:
+    - "Notice 2025-67 (2026 retirement plan limits): https://www.irs.gov/pub/irs-drop/n-25-67.pdf"
+    - "Rev. Proc. 2025-19 (2026 HSA limits): https://www.irs.gov/pub/irs-drop/rp-25-19.pdf"
+    - "Rev. Proc. 2025-32 (gift tax exclusion); P.L. 119-21 §70404 (dependent care); IRS Pub. 590-A, 969, 15-B"
+
+elective_deferral:
+  limit: 24500
+  catch_up_50: 8000
+  catch_up_60_63: 11250
+  indexed: true
+  rounding: 500
+  # SECURE 2.0 §603: catch-ups must be Roth if prior-year FICA wages from the employer exceeded this.
+  roth_catch_up_wage_threshold: 150000
+  roth_catch_up_threshold_indexed: true
+  roth_catch_up_required_from: 2026
+
+annual_additions_limit: 72000
+
+ira:
+  limit: 7500
+  catch_up_50: 1100
+  indexed: true
+  rounding: 500
+  catch_up_rounding: 100
+
+roth_ira_phase_out:
+  indexed: true
+  married_filing_separately_indexed: false
+  ranges:
+    married_filing_jointly: {start: 242000, end: 252000}
+    single: {start: 153000, end: 168000}
+    married_filing_separately: {start: 0, end: 10000}   # lived with spouse
+    head_of_household: {start: 153000, end: 168000}
+
+traditional_ira_deduction_phase_out:
+  indexed: true
+  married_filing_separately_indexed: false
+  contributor_covered:
+    married_filing_jointly: {start: 129000, end: 149000}
+    single: {start: 81000, end: 91000}
+    married_filing_separately: {start: 0, end: 10000}
+    head_of_household: {start: 81000, end: 91000}
+  spouse_covered_only: {start: 242000, end: 252000}
+
+hsa:
+  self_only: 4400
+  family: 8750
+  catch_up_55: 1000
+  indexed: true
+  catch_up_indexed: false
+
+dependent_care_fsa:          # §129, raised by OBBBA for 2026+
+  household_limit: 7500
+  married_filing_separately_limit: 3750
+  indexed: false
+
+gift_tax:
+  annual_exclusion: 19000
+  indexed: true
+  rounding: 1000
+
+plan_529_roth_rollover:
+  lifetime_cap: 35000
+  min_account_age_years: 15
+  contribution_lookback_years: 5

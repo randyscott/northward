@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.swp
+
+# Runtime state: the database (var/northward.db), run outputs, exports, and backups
+var/
+
+# Real profiles live only in the database (PLAN.md D14). Only the sanitized example profile is committed;
+# `northward db export` recreates the others' files under var/export/.
+data/profiles/*
+!data/profiles/example/

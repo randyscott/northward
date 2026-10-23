@@ -1,0 +1,101 @@
+# Account type rules: tax and behavioral definitions shared by every account of a type.
+# `family` selects the account model and behavior in code (northward.config.rules.account_types.AccountFamily).
+# RMD starting ages come from rmd.yaml (by the owner's birth year), not from the account type.
+schema_version: 1
+
+account_types:
+  - name: traditional_401k
+    description: "Traditional 401(k)"
+    family: retirement
+    tax_wrapper: deferred
+    ownership_constraint: individual_only
+    allows_contributions: true
+    withdrawal_tax: ordinary_income
+    rmd_rule: uniform_lifetime
+    early_withdrawal_penalty_age: 59.5
+    contribution_limit: elective_deferral
+
+  - name: roth_401k
+    description: "Roth 401(k)"
+    family: retirement
+    tax_wrapper: roth
+    ownership_constraint: individual_only
+    allows_contributions: true
+    withdrawal_tax: none
+    rmd_rule: none                      # no lifetime RMDs from 2024 (SECURE 2.0)
+    early_withdrawal_penalty_age: 59.5
+    contribution_limit: elective_deferral
+
+  - name: traditional_ira
+    description: "Traditional IRA"
+    family: retirement
+    tax_wrapper: deferred
+    ownership_constraint: individual_only
+    allows_contributions: true
+    withdrawal_tax: ordinary_income
+    rmd_rule: uniform_lifetime
+    early_withdrawal_penalty_age: 59.5
+    contribution_limit: ira
+
+  - name: roth_ira
+    description: "Roth IRA"
+    family: retirement
+    tax_wrapper: roth
+    ownership_constraint: individual_only
+    allows_contributions: true
+    withdrawal_tax: none
+    early_withdrawal_penalty_age: 59.5  # applies to earnings; contributions come out tax- and penalty-free
+    contribution_limit: ira
+
+  - name: hsa
+    description: "Health Savings Account"
+    family: hsa
+    tax_wrapper: hsa
+    ownership_constraint: individual_only
+    allows_contributions: true
+    # Tax-free for medical costs. Otherwise ordinary income, plus the HSA penalty before 65 (federal_tax.yaml).
+    withdrawal_tax: conditional_medical
+    contribution_limit: hsa
+
+  - name: brokerage
+    description: "Taxable brokerage"
+    family: brokerage
+    tax_wrapper: taxable
+    ownership_constraint: joint_or_individual
+    allows_contributions: true
+    withdrawal_tax: capital_gains
+
+  - name: checking
+    description: "Checking account"
+    family: cash
+    tax_wrapper: taxable
+    ownership_constraint: joint_or_individual
+    allows_contributions: true
+    withdrawal_tax: none
+
+  - name: savings
+    description: "Savings account"
+    family: cash
+    tax_wrapper: taxable
+    ownership_constraint: joint_or_individual
+    allows_contributions: true
+    withdrawal_tax: none
+
+  - name: inherited_ira_non_spouse
+    description: "Inherited traditional IRA (non-spouse beneficiary)"
+    family: inherited
+    tax_wrapper: deferred
+    ownership_constraint: individual_only
+    allows_contributions: false
+    withdrawal_tax: ordinary_income
+    rmd_rule: inherited_10_year         # fully distributed by Dec 31 of the 10th year after death
+
+  - name: plan_529
+    description: "529 education savings plan"
+    family: education_529
+    tax_wrapper: education
+    ownership_constraint: individual_only
+    allows_contributions: true
+    # Tax-free for the beneficiary's qualified education costs. Otherwise the earnings share is ordinary income
+    # plus the 529 penalty (federal_tax.yaml).
+    withdrawal_tax: conditional_education

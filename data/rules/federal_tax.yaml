@@ -1,0 +1,243 @@
+# Federal income and payroll tax rules, tax year 2026.
+# Sections marked `indexed: true` are inflation-adjusted each simulated year by simulated CPI (PLAN.md D9);
+# statutory fixed amounts (NIIT, SS taxability, Additional Medicare, CTC phase-out, education credits) are not.
+# Filing-status tables: qualifying_surviving_spouse (QSS) uses the married_filing_jointly value unless given
+# explicitly. A null value means the status is ineligible.
+schema_version: 1
+
+metadata:
+  jurisdiction: US_Federal
+  base_year: 2026
+  description: "Federal brackets, deductions, surtaxes, payroll tax, and credits (verified 2026-09-29)."
+  sources:
+    - "Rev. Proc. 2025-32 (2026 inflation adjustments): https://www.irs.gov/pub/irs-drop/rp-25-32.pdf"
+    - "P.L. 119-21 (OBBBA): https://www.govinfo.gov/content/pkg/PLAW-119publ21/html/PLAW-119publ21.htm"
+    - "IRS Topic 751 (2026 SS wage base): https://www.irs.gov/taxtopics/tc751"
+    - "IRS Pub. 915, 970, 503, 969; Schedule 8812 and 1-A instructions"
+
+standard_deduction:
+  indexed: true
+  amounts:
+    married_filing_jointly: 32200
+    single: 16100
+    married_filing_separately: 16100
+    head_of_household: 24150
+  additional_65_or_blind:        # per person, per condition
+    married: 1650                # MFJ, MFS, QSS
+    unmarried: 2050              # single, HoH
+
+# OBBBA §70103 enhanced deduction for age 65+, tax years 2025-2028. Each qualifying person's $6,000 is reduced
+# separately by 6% of MAGI over the threshold. Married couples must file jointly to claim it.
+senior_deduction:
+  amount_per_person: 6000
+  min_age: 65
+  first_year: 2025
+  last_year: 2028
+  indexed: false
+  phase_out_rate: 0.06
+  magi_threshold:
+    married_filing_jointly: 150000
+    single: 75000
+    married_filing_separately: null
+    head_of_household: 75000
+    qualifying_surviving_spouse: 75000
+
+# [upper bound of taxable income, marginal rate]
+ordinary_income_brackets:
+  indexed: true
+  schedules:
+    married_filing_jointly:
+      - [24800, 0.10]
+      - [100800, 0.12]
+      - [211400, 0.22]
+      - [403550, 0.24]
+      - [512450, 0.32]
+      - [768700, 0.35]
+      - [.inf, 0.37]
+    single:
+      - [12400, 0.10]
+      - [50400, 0.12]
+      - [105700, 0.22]
+      - [201775, 0.24]
+      - [256225, 0.32]
+      - [640600, 0.35]
+      - [.inf, 0.37]
+    married_filing_separately:
+      - [12400, 0.10]
+      - [50400, 0.12]
+      - [105700, 0.22]
+      - [201775, 0.24]
+      - [256225, 0.32]
+      - [384350, 0.35]
+      - [.inf, 0.37]
+    head_of_household:
+      - [17700, 0.10]
+      - [67450, 0.12]
+      - [105700, 0.22]
+      - [201750, 0.24]
+      - [256200, 0.32]
+      - [640600, 0.35]
+      - [.inf, 0.37]
+
+# Long-term capital gains and qualified dividends, stacked on top of ordinary taxable income.
+# Thresholds are indexed separately from the ordinary brackets.
+capital_gains_brackets:
+  indexed: true
+  schedules:
+    married_filing_jointly:
+      - [98900, 0.00]
+      - [613700, 0.15]
+      - [.inf, 0.20]
+    single:
+      - [49450, 0.00]
+      - [545500, 0.15]
+      - [.inf, 0.20]
+    married_filing_separately:
+      - [49450, 0.00]
+      - [306850, 0.15]
+      - [.inf, 0.20]
+    head_of_household:
+      - [66200, 0.00]
+      - [579600, 0.15]
+      - [.inf, 0.20]
+
+net_investment_income_tax:
+  rate: 0.038
+  indexed: false
+  magi_threshold:
+    married_filing_jointly: 250000
+    single: 200000
+    married_filing_separately: 125000
+    head_of_household: 200000
+
+# Provisional income = MAGI + 50% of benefits. MFS values assume the spouses lived together (0/0);
+# MFS living apart all year would use 25,000/34,000.
+social_security_taxability:
+  indexed: false
+  tier1_rate: 0.50
+  tier2_rate: 0.85
+  thresholds:
+    married_filing_jointly: {base: 32000, adjusted_base: 44000}
+    single: {base: 25000, adjusted_base: 34000}
+    married_filing_separately: {base: 0, adjusted_base: 0}
+    head_of_household: {base: 25000, adjusted_base: 34000}
+    qualifying_surviving_spouse: {base: 25000, adjusted_base: 34000}
+
+# §1211(b): net capital losses offset up to this much ordinary income per year (statutory, not indexed);
+# the remainder carries forward indefinitely.
+capital_loss:
+  annual_limit: 3000
+  married_filing_separately_limit: 1500
+
+# §121: gain on the sale of a principal residence excluded from income (statutory, not indexed). Assumes the
+# 2-of-5-year ownership and use tests are met. A surviving spouse keeps $500,000 only within 2 years of the death.
+home_sale_exclusion:
+  married_filing_jointly: 500000
+  single: 250000
+  married_filing_separately: 250000
+  head_of_household: 250000
+  qualifying_surviving_spouse: 250000
+
+fica:
+  social_security_rate: 0.062
+  social_security_wage_base: 184500
+  wage_base_indexed: true
+  medicare_rate: 0.0145
+  additional_medicare_rate: 0.009
+  additional_medicare_indexed: false
+  additional_medicare_threshold:
+    married_filing_jointly: 250000
+    single: 200000
+    married_filing_separately: 125000
+    head_of_household: 200000
+    qualifying_surviving_spouse: 200000
+
+penalties:
+  early_withdrawal_rate: 0.10              # §72(t)
+  early_withdrawal_age: 59.5
+  hsa_non_medical_rate: 0.20               # §223(f)(4)
+  hsa_penalty_free_age: 65
+  plan_529_non_qualified_earnings_rate: 0.10
+
+# "Under N" at the end of the tax year.
+dependent_age_tests:
+  ctc_under_age: 17
+  qualifying_child_under_age: 19
+  student_under_age: 24
+  care_under_age: 13
+
+credits:
+  child_tax_credit:
+    amount_per_child: 2200
+    amount_indexed: true
+    amount_rounding: 100
+    refundable_max_per_child: 1700         # ACTC
+    refundable_indexed: true
+    refundable_rounding: 100
+    refundable_earned_income_threshold: 2500
+    refundable_rate: 0.15
+    phase_out_threshold:                   # applies to CTC + ODC combined
+      married_filing_jointly: 400000
+      single: 200000
+      married_filing_separately: 200000
+      head_of_household: 200000
+      qualifying_surviving_spouse: 200000
+    phase_out_per_1000: 50
+    phase_out_indexed: false
+
+  other_dependent_credit:
+    amount: 500
+    indexed: false
+
+  education:                               # AOTC and LLC share the phase-out; MFS is ineligible
+    indexed: false
+    phase_out:
+      married_filing_jointly: {start: 160000, end: 180000}
+      single: {start: 80000, end: 90000}
+      married_filing_separately: null
+      head_of_household: {start: 80000, end: 90000}
+      qualifying_surviving_spouse: {start: 80000, end: 90000}
+    american_opportunity:                  # per student, first 4 years of postsecondary
+      tier1_expenses: 2000
+      tier1_rate: 1.00
+      tier2_expenses: 2000
+      tier2_rate: 0.25
+      refundable_fraction: 0.40
+      max_years: 4
+    lifetime_learning:                     # per return
+      rate: 0.20
+      expense_cap_per_return: 10000
+
+  # OBBBA §70405 (2026+): 50%, minus 1 point per $2,000 (or fraction) of AGI over $15,000 down to 35%,
+  # then minus 1 point per $2,000 ($4,000 joint) over $75,000 ($150,000 joint) down to 20%.
+  # QSS is not a joint return here. MFS is ineligible (except spouses living apart, not modeled).
+  child_dependent_care:
+    indexed: false
+    expense_cap_one: 3000
+    expense_cap_two_or_more: 6000
+    max_rate: 0.50
+    stages:
+      - agi_threshold:
+          married_filing_jointly: 15000
+          single: 15000
+          married_filing_separately: null
+          head_of_household: 15000
+        step:
+          married_filing_jointly: 2000
+          single: 2000
+          married_filing_separately: null
+          head_of_household: 2000
+        floor_rate: 0.35
+      - agi_threshold:
+          married_filing_jointly: 150000
+          single: 75000
+          married_filing_separately: null
+          head_of_household: 75000
+          qualifying_surviving_spouse: 75000
+        step:
+          married_filing_jointly: 4000
+          single: 2000
+          married_filing_separately: null
+          head_of_household: 2000
+          qualifying_surviving_spouse: 2000
+        floor_rate: 0.20

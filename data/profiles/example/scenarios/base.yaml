@@ -1,0 +1,22 @@
+schema_version: 1
+description: "Baseline for the example household."
+
+horizon:
+  start_year: 2026
+  end_age: 95
+
+market:
+  preset: forward_conservative
+
+macro:
+  salary_growth:
+    real_growth_rate: 0.01
+
+levers:
+  ss_claim_ages:
+    alex: 67
+    jordan: 67
+  contributions:
+    - account: riley_529
+      amount: 3000
+      end: {dependent: riley, age: 17}

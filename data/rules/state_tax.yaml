@@ -1,0 +1,88 @@
+# State income tax rules, keyed by state code. The household's `state` (household.yaml) selects one, and
+# scenario `levers.relocations` can move the household to another. "none" means no state income tax.
+# Amounts are for the base year; `indexed` ones grow with simulated CPI.
+schema_version: 1
+base_year: 2026
+
+states:
+  none:
+    name: "No state income tax"
+    tax: {kind: none}
+
+  WI:
+    name: "Wisconsin"
+    community_property: true            # marital property: both halves stepped up at the first death (IRC 1014(b)(6))
+    sources:
+      - "WI DOR 2026 Form 1-ES instructions (2026 brackets and standard deduction): https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf"
+      - "Wis. Stat. ch. 71 (published 2026-09-04, through 2025 Act 247): https://docs.legis.wisconsin.gov/statutes/statutes/71.pdf"
+      - "WI DOR Fall 2025 Practitioner Q&A (age-67 subtraction); Schedules SB, WD, CS, WI-2441; Pubs 106, 113, 126"
+      - "2025 Wis. Act 15 (LFB summary) and Act 174; verified 2026-09-30"
+    tax:
+      kind: progressive
+      indexed: true                     # brackets and standard deduction: CPI-U, Aug-to-Aug (DOR rounds to $10)
+      # Wisconsin has no qualifying-surviving-spouse status; such filers use head of household (assumption).
+      brackets:
+        single:                    [[15110, 0.035], [51950, 0.044], [332720, 0.053], [.inf, 0.0765]]
+        head_of_household:         [[15110, 0.035], [51950, 0.044], [332720, 0.053], [.inf, 0.0765]]
+        married_filing_jointly:    [[20150, 0.035], [69260, 0.044], [443630, 0.053], [.inf, 0.0765]]
+        married_filing_separately: [[10080, 0.035], [34630, 0.044], [221820, 0.053], [.inf, 0.0765]]
+        qualifying_surviving_spouse: [[15110, 0.035], [51950, 0.044], [332720, 0.053], [.inf, 0.0765]]
+      # Sliding standard deduction on Wisconsin income (after the subtractions below).
+      sliding_standard_deduction:
+        maximum:
+          single: 13960
+          head_of_household: 18030
+          married_filing_jointly: 25840
+          married_filing_separately: 12280
+          qualifying_surviving_spouse: 18030
+        phase_out_start:
+          single: 20120
+          head_of_household: 20120
+          married_filing_jointly: 29040
+          married_filing_separately: 13780
+          qualifying_surviving_spouse: 20120
+        phase_out_rate:
+          single: 0.12
+          head_of_household: 0.22515
+          married_filing_jointly: 0.19778
+          married_filing_separately: 0.19778
+          qualifying_surviving_spouse: 0.22515
+        head_of_household_floor: single
+      personal_exemptions:              # $700 each (taxpayer, spouse, dependents), +$250 at 65+; not indexed
+        per_person: 700
+        per_dependent: 700
+        additional_age_65: 250
+        indexed: false
+      exempt_social_security: true
+      capital_gains_exclusion: 0.30     # of net long-term gain; qualified dividends are ordinary income
+      capital_loss_limit: null          # $3,000 / $1,500 MFS since 2023, same as federal
+      subtract_health_premiums: true    # after-tax health, Medicare B/D, and Medigap premiums (Schedule SB)
+      additional_tax_share: 0.33        # 33% of the federal IRA/HSA additional taxes (Form 1 line 25)
+      retirement_income_exclusions:
+        # Age-67 subtraction (2025 Act 15): up to $24,000 each, pooled to $48,000 when both spouses are 67+.
+        # No income limit, but claiming it forfeits all Wisconsin credits that year (it's optional).
+        - {amount: 24000, min_age: 67, pooled_for_joint: true, bars_credits: true}
+        # The older $5,000 subtraction at 65+, only below a federal AGI cliff.
+        - amount: 5000
+          min_age: 65
+          agi_limit:
+            single: 15000
+            head_of_household: 15000
+            married_filing_jointly: 30000
+            married_filing_separately: 30000
+            qualifying_surviving_spouse: 15000
+      plan_529_deduction:               # Edvest / Tomorrow's Scholar: per beneficiary per return
+        cap: 5280
+        married_filing_separately_cap: 2640
+        per: beneficiary
+        indexed: true
+        rounding: 10
+        carryforward: true
+      married_couple_credit: {rate: 0.03, earned_income_cap: 16000}   # max $480
+      dependent_care_credit:            # 100% of the pre-OBBBA federal rate table, with $10k/$20k caps
+        expense_cap_one: 10000
+        expense_cap_two_or_more: 20000
+        max_rate: 0.35
+        agi_threshold: 15000
+        step: 2000
+        floor_rate: 0.20

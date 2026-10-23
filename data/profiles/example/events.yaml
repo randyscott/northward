@@ -1,0 +1,20 @@
+# Expected one-time events for the example household.
+schema_version: 1
+
+events:
+  - id: parents_ira
+    kind: inheritance
+    description: "Inherited traditional IRA from Jordan's parent"
+    when: {year: 2032}
+    amount: 180000
+    beneficiary: jordan
+    asset: inherited_ira
+    account: jordan_inherited_ira
+    decedent_started_rmds: true
+
+  - id: condo_sale
+    kind: home_sale
+    description: "Sell the rental condo"
+    when: {year: 2034}
+    price: 260000
+    cost_basis: 190000

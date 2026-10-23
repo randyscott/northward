@@ -1,0 +1,125 @@
+# Healthcare rules: Medicare Part B/D premiums and IRMAA, the ACA age curve, and default household cost
+# assumptions (override any of them in a profile's health_costs.yaml). Dollar amounts are 2026 and grow with
+# healthcare inflation (CPI plus the market preset's healthcare spread); IRMAA thresholds are CPI-indexed.
+# ACA premium subsidies aren't modeled (PLAN.md Q6): individual-market premiums are unsubsidized.
+schema_version: 1
+
+metadata:
+  jurisdiction: US_Federal
+  base_year: 2026
+  description: "Medicare 2026 premiums and IRMAA, ACA federal default age curve, cost assumptions (verified 2026-09-30)."
+  sources:
+    - "CMS 2026 Medicare Parts A & B fact sheet: https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles"
+    - "SSA POMS HI 01101.020 (IRMAA tables); 42 U.S.C. 1395r(i) (lookback, indexing, rounding, top-tier freeze)"
+    - "CMS/CCIIO federal default age curve (plan years 2018+)"
+    - "KFF 2026 marketplace benchmark premiums; KFF Medigap and Part D premium data (assumptions)"
+
+medicare:
+  eligibility_age: 65
+  part_b_monthly_premium: 202.90
+  part_b_annual_deductible: 283
+
+# Surcharges per enrollee, by MAGI on the return two years earlier. Joint thresholds are per couple; each
+# enrolled spouse pays the surcharge. The top tier ($500k/$750k, and MFS $391k) is frozen by statute until 2028.
+irmaa:
+  lookback_years: 2
+  thresholds_indexed: true
+  rounding: 1000
+  tiers:
+    single:
+    - {up_to: 109000, part_b_adjustment: 0.00, part_d_adjustment: 0.00}
+    - {up_to: 137000, part_b_adjustment: 81.20, part_d_adjustment: 14.50}
+    - {up_to: 171000, part_b_adjustment: 202.90, part_d_adjustment: 37.50}
+    - {up_to: 205000, part_b_adjustment: 324.60, part_d_adjustment: 60.40}
+    - {up_to: 500000, part_b_adjustment: 446.30, part_d_adjustment: 83.30, indexed_from: 2028}
+    - {up_to: .inf, part_b_adjustment: 487.00, part_d_adjustment: 91.00}
+    joint:
+    - {up_to: 218000, part_b_adjustment: 0.00, part_d_adjustment: 0.00}
+    - {up_to: 274000, part_b_adjustment: 81.20, part_d_adjustment: 14.50}
+    - {up_to: 342000, part_b_adjustment: 202.90, part_d_adjustment: 37.50}
+    - {up_to: 410000, part_b_adjustment: 324.60, part_d_adjustment: 60.40}
+    - {up_to: 750000, part_b_adjustment: 446.30, part_d_adjustment: 83.30, indexed_from: 2028}
+    - {up_to: .inf, part_b_adjustment: 487.00, part_d_adjustment: 91.00}
+    separate:
+    - {up_to: 109000, part_b_adjustment: 0.00, part_d_adjustment: 0.00}
+    - {up_to: 391000, part_b_adjustment: 446.30, part_d_adjustment: 83.30, indexed_from: 2028}
+    - {up_to: .inf, part_b_adjustment: 487.00, part_d_adjustment: 91.00}
+
+# Individual-market premium relative to age 21 (CMS federal default curve); 64 and older use 3.0.
+aca_age_curve:
+  0: 0.765
+  1: 0.765
+  2: 0.765
+  3: 0.765
+  4: 0.765
+  5: 0.765
+  6: 0.765
+  7: 0.765
+  8: 0.765
+  9: 0.765
+  10: 0.765
+  11: 0.765
+  12: 0.765
+  13: 0.765
+  14: 0.765
+  15: 0.833
+  16: 0.859
+  17: 0.885
+  18: 0.913
+  19: 0.941
+  20: 0.97
+  21: 1.0
+  22: 1.0
+  23: 1.0
+  24: 1.0
+  25: 1.004
+  26: 1.024
+  27: 1.048
+  28: 1.087
+  29: 1.119
+  30: 1.135
+  31: 1.159
+  32: 1.183
+  33: 1.198
+  34: 1.214
+  35: 1.222
+  36: 1.23
+  37: 1.238
+  38: 1.246
+  39: 1.262
+  40: 1.278
+  41: 1.302
+  42: 1.325
+  43: 1.357
+  44: 1.397
+  45: 1.444
+  46: 1.5
+  47: 1.563
+  48: 1.635
+  49: 1.706
+  50: 1.786
+  51: 1.865
+  52: 1.952
+  53: 2.04
+  54: 2.135
+  55: 2.23
+  56: 2.333
+  57: 2.437
+  58: 2.548
+  59: 2.603
+  60: 2.714
+  61: 2.81
+  62: 2.873
+  63: 2.952
+  64: 3.0
+
+# Household cost assumptions in 2026 dollars (per person unless noted). Replace with your own in health_costs.yaml.
+default_assumptions:
+  employer_premium: 6850              # household employee share of family coverage (KFF 2025 average; assumption)
+  individual_premium_age_40: 7500     # unsubsidized benchmark silver at 40: $625/mo (KFF 2026 US average)
+  part_d_premium: 420                 # stand-alone Part D plan, ~$35/mo (CMS 2026 average)
+  supplement_premium: 2160            # Medigap Plan G at 65, ~$180/mo (assumption)
+  out_of_pocket_under_65: 1750        # deductibles, copays, uncovered care (CMS NHE-derived; assumption)
+  out_of_pocket_65_plus: 2000         # with Medigap G: Part B deductible, dental/vision/hearing, drug copays
+  dependent_coverage_until_age: 26
+  hsa_medical: pay_when_retired       # HSAs reimburse qualified medical costs once the owner has retired

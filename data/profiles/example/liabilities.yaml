@@ -1,0 +1,15 @@
+schema_version: 1
+
+liabilities:
+  - id: mortgage
+    kind: amortizing
+    description: "Primary residence, 30-year fixed"
+    balance: 285000
+    annual_rate: 0.0425
+    monthly_payment: 1968.0
+
+  - id: car_loan
+    kind: amortizing
+    balance: 18000
+    annual_rate: 0.059
+    remaining_term_months: 36

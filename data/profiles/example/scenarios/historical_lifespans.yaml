@@ -1,0 +1,25 @@
+schema_version: 1
+description: "Baseline levers on resampled historical market years, with sampled lifespans."
+
+horizon:
+  start_year: 2026
+  end_age: 95                  # deterministic runs; Monte Carlo runs to each path's last sampled death
+
+market:
+  preset: bootstrap            # 5-year blocks of 1928-2025 returns and inflation
+  overrides:
+    block_length: 10
+
+macro:
+  salary_growth:
+    real_growth_rate: 0.01
+
+levers:
+  ss_claim_ages:
+    alex: 67
+    jordan: 67
+  mortality: {kind: sampled}   # deterministic runs use each member's life expectancy
+  contributions:
+    - account: riley_529
+      amount: 3000
+      end: {dependent: riley, age: 17}

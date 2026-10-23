@@ -1,0 +1,13 @@
+# What counts as a successful Monte Carlo path, and how legacy is valued (PLAN.md D35, D36). Optional; every scenario
+# of the profile uses it. CLI flags (--liquidity-floor, --allow-shortfall, ...) override it when computing statistics.
+schema_version: 1
+
+success:
+  no_shortfall: true             # every year's spending and taxes are fully funded...
+  shortfall_tolerance: 1         # ...ignoring a yearly gap up to this many dollars (rounding)
+  liquidity_floor:               # optional: cash + brokerage never below this at a year end
+    amount: 50000                # today's dollars
+    start: {event: retirement, member: alex}
+
+legacy:
+  heirs_tax_rate: 0.25           # heirs' income tax on inherited traditional retirement accounts and HSAs

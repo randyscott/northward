@@ -1,0 +1,77 @@
+# Social Security benefit rules. Benefits start from each member's PIA at full retirement age (PLAN.md D6);
+# COLAs follow simulated CPI. Reduction rates may be written as fractions of a percent, e.g. "5/9%".
+schema_version: 1
+
+metadata:
+  jurisdiction: US_Federal
+  base_year: 2026
+  description: "Claiming ages, reductions, credits, family benefits, family maximum, earnings test (verified 2026-09-29)."
+  sources:
+    - "20 CFR Part 404 (eCFR): https://www.ecfr.gov/current/title-20/part-404"
+    - "SSA POMS RS 00615.003 (FRA), .101/.201/.301 (reductions), .690 (DRCs), .736 (family maximum): https://secure.ssa.gov/poms.nsf/"
+    - "SSA OACT bend points, family maximum, earnings test pages and 2026 COLA Fact Sheet (archived copies of ssa.gov, 2026)"
+
+earliest_claim_age: 62
+latest_credit_age: 70
+
+# Worker and spouse full retirement age by birth year (SSA counts a Jan 1 birthday as the prior year).
+full_retirement_age:
+  - {born_through_year: 1954, years: 66}
+  - {born_through_year: 1955, years: 66, months: 2}
+  - {born_through_year: 1956, years: 66, months: 4}
+  - {born_through_year: 1957, years: 66, months: 6}
+  - {born_through_year: 1958, years: 66, months: 8}
+  - {born_through_year: 1959, years: 66, months: 10}
+  - {years: 67}                                       # born 1960 and later
+
+early_reduction:                  # worker's own benefit: 30% at 62 with FRA 67
+  first_months: 36
+  first_rate_per_month: "5/9%"
+  additional_rate_per_month: "5/12%"
+
+delayed_credit_per_year: 0.08     # 2/3% per month from FRA to 70, for births 1943+
+
+spousal:
+  fraction_of_pia: 0.50
+  early_reduction:                # 32.5% of the worker's PIA at 62 with FRA 67
+    first_months: 36
+    first_rate_per_month: "25/36%"
+    additional_rate_per_month: "5/12%"
+
+survivor:
+  fraction_of_deceased_benefit: 1.00
+  earliest_age: 60
+  max_reduction: 0.285            # 71.5% at 60, prorated monthly to the survivor FRA
+  widow_limit_floor_fraction: 0.825
+  full_retirement_age:            # widow(er) FRA phases in later than the worker table
+    - {born_through_year: 1956, years: 66}
+    - {born_through_year: 1957, years: 66, months: 2}
+    - {born_through_year: 1958, years: 66, months: 4}
+    - {born_through_year: 1959, years: 66, months: 6}
+    - {born_through_year: 1960, years: 66, months: 8}
+    - {born_through_year: 1961, years: 66, months: 10}
+    - {years: 67}                 # born 1962 and later
+
+child:
+  living_worker_fraction: 0.50
+  survivor_fraction: 0.75
+  under_age: 18
+  student_under_age: 19           # full-time elementary/secondary student
+  disabled_before_age: 22
+
+child_in_care:
+  child_under_age: 16             # or disabled
+  spouse_fraction: 0.50
+  survivor_parent_fraction: 0.75  # mother's/father's benefit
+
+family_maximum:
+  rates: [1.50, 2.72, 1.34, 1.75]
+  bend_points: [1643, 2371, 3093] # workers first eligible (age 62 or death) in 2026
+  indexed: true
+
+earnings_test:
+  under_fra_exempt: 24480
+  under_fra_withholding_rate: 0.5
+  fra_year_exempt: 65160
+  fra_year_withholding_rate: 0.3333333333333333
+  indexed: true

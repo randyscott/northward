@@ -1,0 +1,70 @@
+# Capital market assumption presets (PLAN.md §4.3). Means and standard deviations are annual, arithmetic, and nominal.
+# A scenario selects a preset with `market: {preset: <id>}` and may override single values.
+# Factor distributions: lognormal (default), normal, or student_t (with the preset's degrees_of_freedom).
+schema_version: 1
+
+presets:
+  - id: forward_conservative
+    description: "Moderately conservative forward-looking assumptions (default)."
+    distribution: lognormal
+    factors:
+      stocks:    {mean: 0.070, std_dev: 0.17}
+      bonds:     {mean: 0.045, std_dev: 0.06}
+      cash:      {mean: 0.030, std_dev: 0.01}
+      inflation: {mean: 0.025, std_dev: 0.012, distribution: normal, min_bound: 0.0, max_bound: 0.08}
+    correlations:
+      stocks: {bonds: 0.10, cash: 0.00, inflation: -0.10}
+      bonds:  {cash: 0.30, inflation: -0.20}
+      cash:   {inflation: 0.50}
+    taxable_income:
+      stocks: {dividend_yield: 0.015, qualified_fraction: 0.95}
+      bonds:  {interest_yield: 0.040}
+    inflation_spreads: {education: 0.020, healthcare: 0.025}
+
+  - id: historical_us
+    # Computed from rules/historical_returns.yaml (1928-2025): arithmetic means, sample standard deviations, and
+    # correlations of the S&P 500, the 10-year Treasury, 3-month T-bills, and CPI-U. A test keeps them in step.
+    description: "US historical averages, 1928-2025 (stocks, 10-year Treasuries, T-bills, CPI), sampled parametrically."
+    distribution: lognormal
+    factors:
+      stocks:    {mean: 0.1185, std_dev: 0.194}
+      bonds:     {mean: 0.0482, std_dev: 0.079}
+      cash:      {mean: 0.0342, std_dev: 0.0304}
+      inflation: {mean: 0.0311, std_dev: 0.039, distribution: normal, min_bound: -0.103, max_bound: 0.182}
+    correlations:
+      stocks: {bonds: 0.02, cash: -0.02, inflation: 0.01}
+      bonds:  {cash: 0.28, inflation: -0.11}
+      cash:   {inflation: 0.37}
+    taxable_income:
+      stocks: {dividend_yield: 0.030, qualified_fraction: 0.95}
+      bonds:  {interest_yield: 0.045}
+    inflation_spreads: {education: 0.020, healthcare: 0.025}
+
+  - id: bootstrap
+    # Resamples whole historical years, in blocks of consecutive years, from rules/historical_returns.yaml, which keeps
+    # real crashes, inflation spells, and cross-asset patterns together. Factors and correlations come from the
+    # history (deterministic runs use them); they can't be overridden.
+    description: "Historical block bootstrap of US years 1928-2025."
+    kind: bootstrap
+    block_length: 5
+    taxable_income:
+      stocks: {dividend_yield: 0.030, qualified_fraction: 0.95}
+      bonds:  {interest_yield: 0.045}
+    inflation_spreads: {education: 0.020, healthcare: 0.025}
+
+  - id: pessimistic
+    description: "Low-return, higher-inflation stress assumptions."
+    distribution: lognormal
+    factors:
+      stocks:    {mean: 0.055, std_dev: 0.18}
+      bonds:     {mean: 0.035, std_dev: 0.06}
+      cash:      {mean: 0.025, std_dev: 0.01}
+      inflation: {mean: 0.030, std_dev: 0.015, distribution: normal, min_bound: 0.0, max_bound: 0.10}
+    correlations:
+      stocks: {bonds: 0.10, cash: 0.00, inflation: -0.10}
+      bonds:  {cash: 0.30, inflation: -0.20}
+      cash:   {inflation: 0.50}
+    taxable_income:
+      stocks: {dividend_yield: 0.015, qualified_fraction: 0.95}
+      bonds:  {interest_yield: 0.035}
+    inflation_spreads: {education: 0.020, healthcare: 0.025}

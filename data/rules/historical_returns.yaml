@@ -1,0 +1,113 @@
+# Annual US returns and inflation, 1928-2025, for the historical block-bootstrap sampler (PLAN.md D38).
+# Each year: nominal total returns of large-cap stocks, the 10-year Treasury, and 3-month T-bills, and CPI-U inflation
+# (December to December). The historical_us preset in market_assumptions.yaml is computed from these values.
+schema_version: 1
+
+metadata:
+  jurisdiction: US
+  base_year: 2025
+  description: "Damodaran annual returns (1928-2025 edition) and BLS CPI-U, retrieved 2026-10-05."
+  sources:
+    - "Aswath Damodaran, Historical Returns on Stocks, Bonds and Bills: 1928-2025 (histretSP.xls, sheet 'Returns by year'). https://www.stern.nyu.edu/~adamodar/pc/datasets/histretSP.xls. stocks: S&P 500 including dividends (earlier large-cap indices before 1957); bonds: 10-year constant-maturity Treasury, repriced annually from FRED yields; cash: average 3-month T-bill rate during the year."
+    - "U.S. Bureau of Labor Statistics, CPI for All Urban Consumers (CPI-U), U.S. city average, all items, not seasonally adjusted (series CUUR0000SA0), via FRED series CPIAUCNS. https://fred.stlouisfed.org/series/CPIAUCNS. inflation = December index / prior December index - 1. Matches Damodaran's inflation column to within 0.06 points (2025: 2.68% from the final December 2025 index vs. 2.74%)."
+
+# year: {stocks, bonds, cash, inflation}
+returns:
+  1928: {stocks: 0.438112, bonds: 0.008355, cash: 0.0308, inflation: -0.011561}
+  1929: {stocks: -0.082979, bonds: 0.042038, cash: 0.0316, inflation: 0.005848}
+  1930: {stocks: -0.251236, bonds: 0.045409, cash: 0.0455, inflation: -0.063953}
+  1931: {stocks: -0.438375, bonds: -0.025589, cash: 0.0231, inflation: -0.093168}
+  1932: {stocks: -0.086424, bonds: 0.087903, cash: 0.0107, inflation: -0.102740}
+  1933: {stocks: 0.499822, bonds: 0.018553, cash: 0.0096, inflation: 0.007634}
+  1934: {stocks: -0.011886, bonds: 0.079634, cash: 0.0028, inflation: 0.015152}
+  1935: {stocks: 0.467404, bonds: 0.044720, cash: 0.0017, inflation: 0.029851}
+  1936: {stocks: 0.319434, bonds: 0.050179, cash: 0.0017, inflation: 0.014493}
+  1937: {stocks: -0.353367, bonds: 0.013791, cash: 0.0028, inflation: 0.028571}
+  1938: {stocks: 0.292827, bonds: 0.042132, cash: 0.0006, inflation: -0.027778}
+  1939: {stocks: -0.010976, bonds: 0.044123, cash: 0.0005, inflation: 0.000000}
+  1940: {stocks: -0.106729, bonds: 0.054025, cash: 0.0004, inflation: 0.007143}
+  1941: {stocks: -0.127715, bonds: -0.020222, cash: 0.0013, inflation: 0.099291}
+  1942: {stocks: 0.191738, bonds: 0.022949, cash: 0.0034, inflation: 0.090323}
+  1943: {stocks: 0.250613, bonds: 0.024900, cash: 0.0038, inflation: 0.029586}
+  1944: {stocks: 0.190307, bonds: 0.025776, cash: 0.0038, inflation: 0.022989}
+  1945: {stocks: 0.358211, bonds: 0.038044, cash: 0.0038, inflation: 0.022472}
+  1946: {stocks: -0.084291, bonds: 0.031284, cash: 0.0038, inflation: 0.181319}
+  1947: {stocks: 0.052000, bonds: 0.009197, cash: 0.0060, inflation: 0.088372}
+  1948: {stocks: 0.057046, bonds: 0.019510, cash: 0.0104, inflation: 0.029915}
+  1949: {stocks: 0.183032, bonds: 0.046635, cash: 0.0112, inflation: -0.020747}
+  1950: {stocks: 0.308055, bonds: 0.004296, cash: 0.0120, inflation: 0.059322}
+  1951: {stocks: 0.236785, bonds: -0.002953, cash: 0.0152, inflation: 0.060000}
+  1952: {stocks: 0.181510, bonds: 0.022680, cash: 0.0172, inflation: 0.007547}
+  1953: {stocks: -0.012082, bonds: 0.041438, cash: 0.0189, inflation: 0.007491}
+  1954: {stocks: 0.525633, bonds: 0.032898, cash: 0.0094, inflation: -0.007435}
+  1955: {stocks: 0.325973, bonds: -0.013364, cash: 0.0172, inflation: 0.003745}
+  1956: {stocks: 0.074395, bonds: -0.022558, cash: 0.0262, inflation: 0.029851}
+  1957: {stocks: -0.104574, bonds: 0.067970, cash: 0.0322, inflation: 0.028986}
+  1958: {stocks: 0.437200, bonds: -0.020990, cash: 0.0177, inflation: 0.017606}
+  1959: {stocks: 0.120565, bonds: -0.026466, cash: 0.0339, inflation: 0.017301}
+  1960: {stocks: 0.003365, bonds: 0.116395, cash: 0.0287, inflation: 0.013605}
+  1961: {stocks: 0.266377, bonds: 0.020609, cash: 0.0235, inflation: 0.006711}
+  1962: {stocks: -0.088115, bonds: 0.056935, cash: 0.0277, inflation: 0.013333}
+  1963: {stocks: 0.226119, bonds: 0.016842, cash: 0.0316, inflation: 0.016447}
+  1964: {stocks: 0.164155, bonds: 0.037281, cash: 0.0355, inflation: 0.009709}
+  1965: {stocks: 0.123992, bonds: 0.007189, cash: 0.0395, inflation: 0.019231}
+  1966: {stocks: -0.099710, bonds: 0.029079, cash: 0.0486, inflation: 0.034591}
+  1967: {stocks: 0.238030, bonds: -0.015806, cash: 0.0429, inflation: 0.030395}
+  1968: {stocks: 0.108149, bonds: 0.032746, cash: 0.0534, inflation: 0.047198}
+  1969: {stocks: -0.082414, bonds: -0.050140, cash: 0.0667, inflation: 0.061972}
+  1970: {stocks: 0.035611, bonds: 0.167547, cash: 0.0639, inflation: 0.055703}
+  1971: {stocks: 0.142212, bonds: 0.097869, cash: 0.0433, inflation: 0.032663}
+  1972: {stocks: 0.187554, bonds: 0.028184, cash: 0.0406, inflation: 0.034063}
+  1973: {stocks: -0.143080, bonds: 0.036587, cash: 0.0704, inflation: 0.087059}
+  1974: {stocks: -0.259018, bonds: 0.019886, cash: 0.0785, inflation: 0.123377}
+  1975: {stocks: 0.369951, bonds: 0.036053, cash: 0.0579, inflation: 0.069364}
+  1976: {stocks: 0.238310, bonds: 0.159846, cash: 0.0498, inflation: 0.048649}
+  1977: {stocks: -0.069797, bonds: 0.012900, cash: 0.0526, inflation: 0.067010}
+  1978: {stocks: 0.065093, bonds: -0.007776, cash: 0.0718, inflation: 0.090177}
+  1979: {stocks: 0.185195, bonds: 0.006707, cash: 0.1005, inflation: 0.132939}
+  1980: {stocks: 0.317352, bonds: -0.029897, cash: 0.1139, inflation: 0.125163}
+  1981: {stocks: -0.047024, bonds: 0.081992, cash: 0.1404, inflation: 0.089224}
+  1982: {stocks: 0.204191, bonds: 0.328145, cash: 0.1109, inflation: 0.038298}
+  1983: {stocks: 0.223372, bonds: 0.032002, cash: 0.0895, inflation: 0.037910}
+  1984: {stocks: 0.061461, bonds: 0.137334, cash: 0.0992, inflation: 0.039487}
+  1985: {stocks: 0.312351, bonds: 0.257125, cash: 0.0772, inflation: 0.037987}
+  1986: {stocks: 0.184946, bonds: 0.242842, cash: 0.0615, inflation: 0.010979}
+  1987: {stocks: 0.058127, bonds: -0.049605, cash: 0.0596, inflation: 0.044344}
+  1988: {stocks: 0.165372, bonds: 0.082236, cash: 0.0689, inflation: 0.044194}
+  1989: {stocks: 0.314752, bonds: 0.176936, cash: 0.0839, inflation: 0.046473}
+  1990: {stocks: -0.030645, bonds: 0.062354, cash: 0.0775, inflation: 0.061063}
+  1991: {stocks: 0.302348, bonds: 0.150045, cash: 0.0554, inflation: 0.030643}
+  1992: {stocks: 0.074937, bonds: 0.093616, cash: 0.0351, inflation: 0.029007}
+  1993: {stocks: 0.099671, bonds: 0.142110, cash: 0.0307, inflation: 0.027484}
+  1994: {stocks: 0.013259, bonds: -0.080367, cash: 0.0437, inflation: 0.026749}
+  1995: {stocks: 0.371952, bonds: 0.234808, cash: 0.0566, inflation: 0.025384}
+  1996: {stocks: 0.226810, bonds: 0.014286, cash: 0.0515, inflation: 0.033225}
+  1997: {stocks: 0.331037, bonds: 0.099391, cash: 0.0520, inflation: 0.017024}
+  1998: {stocks: 0.283380, bonds: 0.149214, cash: 0.0491, inflation: 0.016119}
+  1999: {stocks: 0.208854, bonds: -0.082542, cash: 0.0478, inflation: 0.026846}
+  2000: {stocks: -0.090318, bonds: 0.166553, cash: 0.0600, inflation: 0.033868}
+  2001: {stocks: -0.118498, bonds: 0.055722, cash: 0.0348, inflation: 0.015517}
+  2002: {stocks: -0.219660, bonds: 0.151164, cash: 0.0164, inflation: 0.023769}
+  2003: {stocks: 0.283558, bonds: 0.003753, cash: 0.0103, inflation: 0.018795}
+  2004: {stocks: 0.107428, bonds: 0.044907, cash: 0.0140, inflation: 0.032556}
+  2005: {stocks: 0.048345, bonds: 0.028675, cash: 0.0322, inflation: 0.034157}
+  2006: {stocks: 0.156126, bonds: 0.019610, cash: 0.0485, inflation: 0.025407}
+  2007: {stocks: 0.054847, bonds: 0.102099, cash: 0.0448, inflation: 0.040813}
+  2008: {stocks: -0.365523, bonds: 0.201013, cash: 0.0140, inflation: 0.000914}
+  2009: {stocks: 0.259352, bonds: -0.111167, cash: 0.0015, inflation: 0.027213}
+  2010: {stocks: 0.148211, bonds: 0.084629, cash: 0.0014, inflation: 0.014957}
+  2011: {stocks: 0.020984, bonds: 0.160353, cash: 0.0005, inflation: 0.029624}
+  2012: {stocks: 0.158906, bonds: 0.029716, cash: 0.0009, inflation: 0.017410}
+  2013: {stocks: 0.321451, bonds: -0.091046, cash: 0.0006, inflation: 0.015017}
+  2014: {stocks: 0.135244, bonds: 0.107462, cash: 0.0003, inflation: 0.007565}
+  2015: {stocks: 0.013789, bonds: 0.012843, cash: 0.0005, inflation: 0.007295}
+  2016: {stocks: 0.117731, bonds: 0.006906, cash: 0.0032, inflation: 0.020746}
+  2017: {stocks: 0.216055, bonds: 0.028017, cash: 0.0095, inflation: 0.021091}
+  2018: {stocks: -0.042269, bonds: -0.000167, cash: 0.0197, inflation: 0.019102}
+  2019: {stocks: 0.312117, bonds: 0.096356, cash: 0.0211, inflation: 0.022851}
+  2020: {stocks: 0.180232, bonds: 0.113319, cash: 0.0036, inflation: 0.013620}
+  2021: {stocks: 0.284689, bonds: -0.044160, cash: 0.0004, inflation: 0.070364}
+  2022: {stocks: -0.180375, bonds: -0.178282, cash: 0.0209, inflation: 0.064544}
+  2023: {stocks: 0.260607, bonds: 0.038800, cash: 0.0528, inflation: 0.033521}
+  2024: {stocks: 0.248786, bonds: -0.016372, cash: 0.0518, inflation: 0.028881}
+  2025: {stocks: 0.177237, bonds: 0.077955, cash: 0.0421, inflation: 0.026771}

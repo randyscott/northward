@@ -1,0 +1,68 @@
+schema_version: 1
+
+accounts:
+  - id: alex_401k
+    owner: alex
+    type: traditional_401k
+    balance: 420000
+    asset_strategy: {kind: target_date, target_year: 2040}
+
+  - id: alex_roth_ira
+    owner: alex
+    type: roth_ira
+    balance: 85000
+    asset_strategy: {kind: target_date, target_year: 2040, target_equity: 0.60}
+
+  - id: jordan_401k
+    owner: jordan
+    type: traditional_401k
+    balance: 260000
+    asset_strategy: {kind: target_date, target_year: 2046}
+
+  - id: jordan_roth_401k
+    owner: jordan
+    type: roth_401k
+    balance: 60000
+    asset_strategy: {kind: target_date, target_year: 2046}
+
+  - id: jordan_hsa
+    owner: jordan
+    type: hsa
+    balance: 18000
+    asset_strategy: {kind: static_allocation, stocks: 0.80, bonds: 0.20}
+
+  - id: joint_brokerage
+    owner: joint
+    type: brokerage
+    balance: 150000
+    cost_basis: 110000
+    asset_strategy: {kind: static_allocation, stocks: 0.70, bonds: 0.25, cash: 0.05}
+
+  - id: joint_checking
+    owner: joint
+    type: checking
+    balance: 15000
+
+  - id: joint_savings
+    owner: joint
+    type: savings
+    balance: 45000
+    interest_rate: 0.035
+
+  - id: sam_529
+    owner: jordan
+    type: plan_529
+    beneficiary: sam
+    balance: 62000
+    cost_basis: 41000
+    opened_year: 2013
+    asset_strategy: {kind: target_date, target_year: 2030}
+
+  - id: riley_529
+    owner: jordan
+    type: plan_529
+    beneficiary: riley
+    balance: 14000
+    cost_basis: 11500
+    opened_year: 2020
+    asset_strategy: {kind: target_date, target_year: 2037}

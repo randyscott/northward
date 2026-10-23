@@ -1,0 +1,23 @@
+schema_version: 1
+description: "Alex dies at 74 and Jordan lives to 95; the household moves to Wisconsin in 2045."
+
+horizon:
+  start_year: 2026
+  end_age: 95
+
+market:
+  preset: forward_conservative
+
+macro:
+  salary_growth:
+    real_growth_rate: 0.01
+
+levers:
+  ss_claim_ages:
+    alex: 67
+    jordan: 67
+  mortality:
+    kind: fixed
+    death_ages: {alex: 74.5}
+  relocations:
+    - {when: {year: 2045}, state: WI}

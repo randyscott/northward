@@ -1,0 +1,46 @@
+schema_version: 1
+
+income_streams:
+  - id: alex_salary
+    owner: alex
+    type: salary
+    amount: 138000
+    elections:
+      retirement_deferrals:
+        - {account: alex_401k, percent: 0.08}
+      employer_match:
+        account: alex_401k
+        tiers:                               # 100% of the first 3% of pay, 50% of the next 2%
+          - {match: 1.0, up_to: 0.03}
+          - {match: 0.5, up_to: 0.05}
+
+  - id: jordan_salary
+    owner: jordan
+    type: salary
+    amount: 112000
+    elections:
+      retirement_deferrals:
+        - {account: jordan_roth_401k, max: true, include_catch_up: true}
+        - {account: jordan_401k, amount: 2000}
+      employer_match:
+        account: jordan_401k
+        tiers: [{match: 0.5, up_to: 0.06}]
+      hsa: {account: jordan_hsa, coverage: family, max: true, include_catch_up: true, employer: 750}
+      dependent_care_fsa:
+        annual: 5000
+        until: {dependent: riley, age: 12}
+
+  - id: alex_pension
+    owner: alex
+    type: pension
+    annual_amount: 14000
+    start: {member: alex, age: 65}
+    cola: 0.0
+    survivor_fraction: 0.5
+
+  - id: rental_income
+    owner: joint
+    type: other
+    description: "Net rental income from a small condo"
+    amount: 9000
+    end: {year: 2034}

@@ -1,0 +1,60 @@
+schema_version: 1
+
+spending:
+  base:
+    amount: 84000                # today's dollars, excluding healthcare
+    index: general
+    retirement_change: -0.05
+    phases:
+      reference: alex
+      bands:
+        - {until_age: 75, multiplier: 1.00}
+        - {until_age: 85, multiplier: 0.85}
+        - {multiplier: 0.75}
+
+  categories:
+    - id: sam_household
+      description: "Food, activities, and other costs for Sam"
+      amount: 14000
+      end: {dependent: sam, age: 17}
+
+    - id: riley_household
+      amount: 14000
+      end: {dependent: riley, age: 17}
+
+    - id: riley_after_school_care
+      amount: 7500
+      tags: [dependent_care]
+      beneficiary: riley
+      end: {dependent: riley, age: 12}
+
+    - id: sam_college
+      amount: 32000
+      index: education
+      tags: [qualified_education]
+      beneficiary: sam
+      start: {dependent: sam, age: 18}
+      end: {dependent: sam, age: 21}
+
+    - id: riley_college
+      amount: 32000
+      index: education
+      tags: [qualified_education]
+      beneficiary: riley
+      start: {dependent: riley, age: 18}
+      end: {dependent: riley, age: 21}
+
+    - id: car_replacement
+      amount: 38000
+      every_years: 8
+      start: {year: 2029}
+      end: {member: alex, age: 82}
+
+    - id: retirement_travel
+      amount: 12000
+      start: {event: retirement, member: alex}
+      end: {member: alex, age: 78}
+
+    - id: roof
+      amount: 22000
+      once: {year: 2031}

@@ -1,0 +1,37 @@
+# Sanitized example household used by tests and demos. All names and figures are fictional.
+schema_version: 1
+
+household:
+  filing_status: married_filing_jointly
+
+members:
+  - id: alex
+    name: "Alex Example"
+    sex: male
+    birth_year: 1978
+    birth_month: 9
+    target_retirement_age: 62
+    social_security: {pia_at_fra: 2850}
+
+  - id: jordan
+    name: "Jordan Example"
+    sex: female
+    birth_year: 1981
+    birth_month: 2
+    target_retirement_age: 65
+    social_security: {pia_at_fra: 2100}
+
+dependents:
+  - id: sam
+    name: "Sam Example"
+    birth_year: 2012
+    birth_month: 5
+    full_time_student_ages: [18, 21]
+    lives_with_household_until_age: 22
+
+  - id: riley
+    name: "Riley Example"
+    birth_year: 2019
+    birth_month: 11
+    full_time_student_ages: [18, 21]
+    lives_with_household_until_age: 22

@@ -1,0 +1,39 @@
+schema_version: 1
+description: "Alex retires at 58; fill the 22% bracket with Roth conversions until SS; delay SS to 70."
+
+horizon:
+  start_year: 2026
+  end_age: 95
+
+market:
+  preset: forward_conservative
+  overrides:
+    factors.stocks.mean: 0.065
+
+macro:
+  salary_growth:
+    real_growth_rate: 0.01
+
+levers:
+  ss_claim_ages:
+    alex: 70
+    jordan: {years: 67, months: 6}
+  withdrawal_order: [taxable, roth, deferred, hsa]
+  # An emergency fund: withdrawals leave $50,000 (today's dollars) in savings until every other account is used up,
+  # and surplus cash tops it up first. Without it, taxable-first withdrawals and the conversions' taxes empty cash and
+  # brokerage within about ten years of retirement while the Roth keeps growing.
+  cash_reserve:
+    account: joint_savings
+    amount: 50000
+  roth_conversions:
+    kind: fill_bracket
+    bracket_rate: 0.22
+    start_year: 2036
+    end_year: 2047
+    respect_phase_outs: true
+
+overrides:
+  household:
+    members.alex.target_retirement_age: 58
+  spending:
+    spending.base.amount: 80000
