@@ -1,4 +1,4 @@
-"""Database tables (PLAN.md D13–D17). Documents are YAML text in append-only revisions; Pydantic stays the only schema.
+"""Database tables (docs/decisions.md D13–D17). Documents are YAML text in append-only revisions; Pydantic stays the only schema.
 
 Change these models only together with a new Alembic migration (`make migration m="..."`).
 """
@@ -49,7 +49,7 @@ class Profile(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(100), unique=True)
-    owner_user_id: Mapped[int | None] = mapped_column(Integer)  # unused until Phase 10 (D17)
+    owner_user_id: Mapped[int | None] = mapped_column(Integer)  # unused until multi-user support (D17)
     created_at: Mapped[datetime] = mapped_column(default=utc_now)
     updated_at: Mapped[datetime] = mapped_column(default=utc_now, onupdate=utc_now)
     archived_at: Mapped[datetime | None]  # soft delete (Q10): hidden from listings until restored or purged

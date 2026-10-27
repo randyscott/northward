@@ -1,1 +1,1 @@
-"""Annual lifecycle stages and single-path simulation (Phase 2)."""
+"""Annual lifecycle stages and single-path simulation."""

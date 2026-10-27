@@ -10,41 +10,55 @@ from northward.config.base import JOINT_OWNER, Age, Document, FilingStatus, Iden
 
 
 class SocialSecurityRecord(StrictModel):
-    """A member's own Social Security record (PLAN.md D6)."""
+    """A member's own Social Security record."""
 
-    # Monthly Primary Insurance Amount at full retirement age, in today's dollars (as on the SSA statement).
     pia_at_fra: Money
+    """Monthly benefit at full retirement age (the Primary Insurance Amount), in today's dollars, from the SSA
+    statement."""
 
 
 class Member(StrictModel):
     """An adult in the household who can own accounts, earn income, and claim Social Security."""
 
     id: Identifier
+    """How other documents refer to this person."""
     name: str
+    """Display name."""
     birth_year: Year
+    """Year of birth."""
     birth_month: Month
+    """1-12. Used for age 59 1/2, Social Security claiming months, and retirement proration."""
     target_retirement_age: Age
-    # None: no benefit on the member's own record (spousal and survivor benefits may still apply).
+    """When salary stops (prorated by month in that year). May be fractional, e.g. 62.5."""
     social_security: SocialSecurityRecord | None = None
-    # Used only to pick the life table when mortality is sampled (Phase 6); None uses the average of both tables.
+    """The member's own Social Security record. Leave out if they have none; spousal and survivor benefits still
+    apply."""
     sex: Literal["male", "female"] | None = None
+    """Picks the life table when lifespans are sampled. Without it, the average of both tables is used."""
 
 
 class Dependent(StrictModel):
-    """A child or other relative the household supports and may claim for tax purposes (PLAN.md §4.4)."""
+    """A child or other relative the household supports and may claim for tax purposes."""
 
     id: Identifier
+    """How other documents refer to this person. Members and dependents share one set of ids."""
     name: str
+    """Display name."""
     birth_year: Year
+    """Year of birth."""
     birth_month: Month
+    """1-12."""
     relationship: Literal["child", "other_relative"] = "child"
-    # Age after which the dependent no longer lives with the household. None: until dependency rules end it.
+    """An other relative is a dependent while living with the household, and never gets the Child Tax Credit."""
     lives_with_household_until_age: int | None = Field(default=None, ge=0)
-    # Inclusive [first, last] ages as a full-time student; extends dependency to under 24 and drives AOTC/LLC.
+    """The last age at which they live with the household. Without it, the dependency age rules decide."""
     full_time_student_ages: tuple[int, int] | None = None
+    """[first, last] ages as a full-time student (inclusive). Extends dependency to under 24 and decides the
+    education credit."""
     disabled: bool = False
-    # Members whose Social Security records can pay child benefits. None: every member (for a child).
+    """Removes the age limits on dependency, the care credit, and Social Security child benefits."""
     child_of: tuple[Identifier, ...] | None = None
+    """Members whose Social Security records can pay child benefits. Default: every member (for a child)."""
 
     @model_validator(mode="after")
     def _check_student_ages(self) -> Dependent:
@@ -57,13 +71,21 @@ class Dependent(StrictModel):
 
 class HouseholdInfo(StrictModel):
     filing_status: FilingStatus
-    state: str = "none"  # state of residence: a key in rules/state_tax.yaml
+    """Two members file jointly or separately; one member files single, head of household, or as a qualifying
+    surviving spouse. After a death the survivor's status changes automatically."""
+    state: str = "none"
+    """State of residence: a key in rules/state_tax.yaml (`none` for no state income tax)."""
 
 
 class HouseholdDoc(Document):
+    """Who is in the household: members, dependents, filing status, and state of residence."""
+
     household: HouseholdInfo
+    """Filing status and state of residence."""
     members: tuple[Member, ...] = Field(min_length=1, max_length=2)
+    """One or two adults."""
     dependents: tuple[Dependent, ...] = ()
+    """Children or other relatives the household supports."""
 
     @model_validator(mode="after")
     def _check_consistency(self) -> HouseholdDoc:

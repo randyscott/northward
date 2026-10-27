@@ -3634,6 +3634,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -3655,17 +3656,37 @@
    },
    "AccountsDoc": {
     "additionalProperties": false,
-    "description": "Raw account entries; `parse_accounts` validates each against the model its account type's family selects.",
+    "description": "Every account the household owns: owner, type, balance, and how it's invested.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "accounts": {
       "default": [],
+      "description": "The fields an account needs depend on its `type`.",
       "items": {
-       "additionalProperties": true,
-       "type": "object"
+       "anyOf": [
+        {
+         "$ref": "#/components/schemas/RetirementAccount"
+        },
+        {
+         "$ref": "#/components/schemas/HsaAccount"
+        },
+        {
+         "$ref": "#/components/schemas/InheritedAccount"
+        },
+        {
+         "$ref": "#/components/schemas/BrokerageAccount"
+        },
+        {
+         "$ref": "#/components/schemas/CashAccount"
+        },
+        {
+         "$ref": "#/components/schemas/Plan529Account"
+        }
+       ]
       },
       "title": "Accounts",
       "type": "array"
@@ -3752,6 +3773,7 @@
     "description": "Fixed-payment loan (mortgage, auto). Give either `monthly_payment` or `remaining_term_months`.",
     "properties": {
      "id": {
+      "description": "Shown in results; events can pay the loan off by this id.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -3771,14 +3793,17 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "balance": {
+      "description": "The balance owed now.",
       "minimum": 0,
       "title": "Balance",
       "type": "number"
      },
      "annual_rate": {
+      "description": "The interest rate, e.g. 0.0425.",
       "maximum": 1,
       "minimum": 0,
       "title": "Annual Rate",
@@ -3795,6 +3820,7 @@
        }
       ],
       "default": null,
+      "description": "The scheduled principal and interest payment (not escrow). Give this or `remaining_term_months`.",
       "title": "Monthly Payment"
      },
      "remaining_term_months": {
@@ -3808,10 +3834,12 @@
        }
       ],
       "default": null,
+      "description": "Months left on the loan; the payment is computed from it. Give this or `monthly_payment`.",
       "title": "Remaining Term Months"
      },
      "extra_monthly_payment": {
       "default": 0.0,
+      "description": "Extra principal paid each month.",
       "minimum": 0,
       "title": "Extra Monthly Payment",
       "type": "number"
@@ -3828,14 +3856,17 @@
    },
    "BaseSpending": {
     "additionalProperties": false,
+    "description": "Ordinary living costs, excluding taxes, healthcare, and loan payments (which are modeled separately).",
     "properties": {
      "amount": {
+      "description": "Annual spending in today's dollars.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
      },
      "index": {
       "default": "general",
+      "description": "How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`.",
       "enum": [
        "general",
        "education",
@@ -3847,17 +3878,20 @@
      },
      "retirement_change": {
       "default": 0.0,
+      "description": "Fractional change from the first full year all members are retired, e.g. -0.10.",
       "minimum": -1,
       "title": "Retirement Change",
       "type": "number"
      },
      "includes_healthcare": {
       "default": false,
+      "description": "True if `amount` already covers healthcare, which turns off the healthcare cost model.",
       "title": "Includes Healthcare",
       "type": "boolean"
      },
      "survivor_multiplier": {
       "default": 0.75,
+      "description": "After the first death in a two-member household, base spending is multiplied by this.",
       "minimum": 0,
       "title": "Survivor Multiplier",
       "type": "number"
@@ -3871,7 +3905,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Multipliers by a member's age, e.g. spending less in later decades."
      }
     },
     "required": [
@@ -3914,28 +3949,97 @@
     "title": "BracketTable",
     "type": "object"
    },
+   "BrokerageAccount": {
+    "additionalProperties": false,
+    "description": "A taxable brokerage account.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "asset_strategy": {
+      "description": "How the account is invested: a static_allocation or a target_date glide path.",
+      "discriminator": {
+       "mapping": {
+        "static_allocation": "#/components/schemas/StaticAllocation",
+        "target_date": "#/components/schemas/TargetDateStrategy"
+       },
+       "propertyName": "kind"
+      },
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/TargetDateStrategy"
+       },
+       {
+        "$ref": "#/components/schemas/StaticAllocation"
+       }
+      ],
+      "title": "Asset Strategy"
+     },
+     "cost_basis": {
+      "description": "Total cost basis of the holdings (average-cost basis is used).",
+      "minimum": 0,
+      "title": "Cost Basis",
+      "type": "number"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance",
+     "asset_strategy",
+     "cost_basis"
+    ],
+    "title": "BrokerageAccount",
+    "type": "object"
+   },
    "ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0___Le_le_1_____": {
     "additionalProperties": false,
     "properties": {
      "married_filing_jointly": {
+      "description": "The value for married filing jointly.",
       "maximum": 1,
       "minimum": 0,
       "title": "Married Filing Jointly",
       "type": "number"
      },
      "single": {
+      "description": "The value for single filers.",
       "maximum": 1,
       "minimum": 0,
       "title": "Single",
       "type": "number"
      },
      "married_filing_separately": {
+      "description": "The value for married filing separately.",
       "maximum": 1,
       "minimum": 0,
       "title": "Married Filing Separately",
       "type": "number"
      },
      "head_of_household": {
+      "description": "The value for head of household.",
       "maximum": 1,
       "minimum": 0,
       "title": "Head Of Household",
@@ -3953,6 +4057,7 @@
        }
       ],
       "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value.",
       "title": "Qualifying Surviving Spouse"
      }
     },
@@ -3969,21 +4074,25 @@
     "additionalProperties": false,
     "properties": {
      "married_filing_jointly": {
+      "description": "The value for married filing jointly.",
       "minimum": 0,
       "title": "Married Filing Jointly",
       "type": "number"
      },
      "single": {
+      "description": "The value for single filers.",
       "minimum": 0,
       "title": "Single",
       "type": "number"
      },
      "married_filing_separately": {
+      "description": "The value for married filing separately.",
       "minimum": 0,
       "title": "Married Filing Separately",
       "type": "number"
      },
      "head_of_household": {
+      "description": "The value for head of household.",
       "minimum": 0,
       "title": "Head Of Household",
       "type": "number"
@@ -3999,6 +4108,7 @@
        }
       ],
       "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value.",
       "title": "Qualifying Surviving Spouse"
      }
     },
@@ -4015,6 +4125,7 @@
     "additionalProperties": false,
     "properties": {
      "married_filing_jointly": {
+      "description": "The value for married filing jointly.",
       "items": {
        "maxItems": 2,
        "minItems": 2,
@@ -4032,6 +4143,7 @@
       "type": "array"
      },
      "single": {
+      "description": "The value for single filers.",
       "items": {
        "maxItems": 2,
        "minItems": 2,
@@ -4049,6 +4161,7 @@
       "type": "array"
      },
      "married_filing_separately": {
+      "description": "The value for married filing separately.",
       "items": {
        "maxItems": 2,
        "minItems": 2,
@@ -4066,6 +4179,7 @@
       "type": "array"
      },
      "head_of_household": {
+      "description": "The value for head of household.",
       "items": {
        "maxItems": 2,
        "minItems": 2,
@@ -4105,6 +4219,7 @@
        }
       ],
       "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value.",
       "title": "Qualifying Surviving Spouse"
      }
     },
@@ -4121,16 +4236,20 @@
     "additionalProperties": false,
     "properties": {
      "married_filing_jointly": {
-      "$ref": "#/components/schemas/PhaseOutRange"
+      "$ref": "#/components/schemas/PhaseOutRange",
+      "description": "The value for married filing jointly."
      },
      "single": {
-      "$ref": "#/components/schemas/PhaseOutRange"
+      "$ref": "#/components/schemas/PhaseOutRange",
+      "description": "The value for single filers."
      },
      "married_filing_separately": {
-      "$ref": "#/components/schemas/PhaseOutRange"
+      "$ref": "#/components/schemas/PhaseOutRange",
+      "description": "The value for married filing separately."
      },
      "head_of_household": {
-      "$ref": "#/components/schemas/PhaseOutRange"
+      "$ref": "#/components/schemas/PhaseOutRange",
+      "description": "The value for head of household."
      },
      "qualifying_surviving_spouse": {
       "anyOf": [
@@ -4141,7 +4260,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value."
      }
     },
     "required": [
@@ -4157,16 +4277,20 @@
     "additionalProperties": false,
     "properties": {
      "married_filing_jointly": {
-      "$ref": "#/components/schemas/SsTaxThresholds"
+      "$ref": "#/components/schemas/SsTaxThresholds",
+      "description": "The value for married filing jointly."
      },
      "single": {
-      "$ref": "#/components/schemas/SsTaxThresholds"
+      "$ref": "#/components/schemas/SsTaxThresholds",
+      "description": "The value for single filers."
      },
      "married_filing_separately": {
-      "$ref": "#/components/schemas/SsTaxThresholds"
+      "$ref": "#/components/schemas/SsTaxThresholds",
+      "description": "The value for married filing separately."
      },
      "head_of_household": {
-      "$ref": "#/components/schemas/SsTaxThresholds"
+      "$ref": "#/components/schemas/SsTaxThresholds",
+      "description": "The value for head of household."
      },
      "qualifying_surviving_spouse": {
       "anyOf": [
@@ -4177,7 +4301,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value."
      }
     },
     "required": [
@@ -4202,6 +4327,7 @@
         "type": "null"
        }
       ],
+      "description": "The value for married filing jointly.",
       "title": "Married Filing Jointly"
      },
      "single": {
@@ -4214,6 +4340,7 @@
         "type": "null"
        }
       ],
+      "description": "The value for single filers.",
       "title": "Single"
      },
      "married_filing_separately": {
@@ -4226,6 +4353,7 @@
         "type": "null"
        }
       ],
+      "description": "The value for married filing separately.",
       "title": "Married Filing Separately"
      },
      "head_of_household": {
@@ -4238,6 +4366,7 @@
         "type": "null"
        }
       ],
+      "description": "The value for head of household.",
       "title": "Head Of Household"
      },
      "qualifying_surviving_spouse": {
@@ -4251,6 +4380,7 @@
        }
       ],
       "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value.",
       "title": "Qualifying Surviving Spouse"
      }
     },
@@ -4274,7 +4404,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "The value for married filing jointly."
      },
      "single": {
       "anyOf": [
@@ -4284,7 +4415,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "The value for single filers."
      },
      "married_filing_separately": {
       "anyOf": [
@@ -4294,7 +4426,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "The value for married filing separately."
      },
      "head_of_household": {
       "anyOf": [
@@ -4304,7 +4437,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "The value for head of household."
      },
      "qualifying_surviving_spouse": {
       "anyOf": [
@@ -4315,7 +4449,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "The value for a qualifying surviving spouse. Default: the married-filing-jointly value."
      }
     },
     "required": [
@@ -4374,16 +4509,71 @@
     "title": "CareRateStage",
     "type": "object"
    },
+   "CashAccount": {
+    "additionalProperties": false,
+    "description": "A checking or savings account.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "interest_rate": {
+      "anyOf": [
+       {
+        "maximum": 1,
+        "minimum": 0,
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "default": null,
+      "description": "A fixed annual rate. Default: the market preset's cash return.",
+      "title": "Interest Rate"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance"
+    ],
+    "title": "CashAccount",
+    "type": "object"
+   },
    "CashReserve": {
     "additionalProperties": false,
     "description": "An emergency fund kept at `amount` (today's dollars) in `account`. Withdrawals leave it in place until every\nother account in the withdrawal order is used up. Each year, once spending is covered, it's topped back up to its\ninflation-adjusted level: from the year's cash first, then from the other accounts in the withdrawal order.",
     "properties": {
      "account": {
+      "description": "A cash or brokerage account.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
      },
      "amount": {
+      "description": "The reserve in today's dollars, grown with inflation.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -4586,6 +4776,7 @@
       "additionalProperties": false,
       "properties": {
        "years": {
+        "description": "Whole years of age, 62-70.",
         "maximum": 70,
         "minimum": 62,
         "title": "Years",
@@ -4593,6 +4784,7 @@
        },
        "months": {
         "default": 0,
+        "description": "Extra months, 0-11.",
         "maximum": 11,
         "minimum": 0,
         "title": "Months",
@@ -4618,11 +4810,13 @@
     "description": "A recurring non-payroll contribution (IRA, 529, brokerage). Payroll contributions are salary elections.",
     "properties": {
      "account": {
+      "description": "The account contributed to.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
      },
      "amount": {
+      "description": "Per year, in today's dollars.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -4650,6 +4844,7 @@
        }
       ],
       "default": null,
+      "description": "The first year. Default: the start of the plan.",
       "title": "Start"
      },
      "end": {
@@ -4675,10 +4870,12 @@
        }
       ],
       "default": null,
+      "description": "The last year (inclusive). Default: the end of the plan.",
       "title": "End"
      },
      "index": {
       "default": "general",
+      "description": "`general` grows with inflation; `none` stays at a fixed nominal amount.",
       "enum": [
        "general",
        "none"
@@ -4698,6 +4895,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -4754,11 +4952,13 @@
     "additionalProperties": false,
     "properties": {
      "source": {
+      "description": "A traditional (tax-deferred) retirement account.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Source",
       "type": "string"
      },
      "target": {
+      "description": "A Roth account of the same owner.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Target",
       "type": "string"
@@ -4798,24 +4998,28 @@
    },
    "Dependent": {
     "additionalProperties": false,
-    "description": "A child or other relative the household supports and may claim for tax purposes (PLAN.md \u00a74.4).",
+    "description": "A child or other relative the household supports and may claim for tax purposes.",
     "properties": {
      "id": {
+      "description": "How other documents refer to this person. Members and dependents share one set of ids.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
      },
      "name": {
+      "description": "Display name.",
       "title": "Name",
       "type": "string"
      },
      "birth_year": {
+      "description": "Year of birth.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Birth Year",
       "type": "integer"
      },
      "birth_month": {
+      "description": "1-12.",
       "maximum": 12,
       "minimum": 1,
       "title": "Birth Month",
@@ -4823,6 +5027,7 @@
      },
      "relationship": {
       "default": "child",
+      "description": "An other relative is a dependent while living with the household, and never gets the Child Tax Credit.",
       "enum": [
        "child",
        "other_relative"
@@ -4841,6 +5046,7 @@
        }
       ],
       "default": null,
+      "description": "The last age at which they live with the household. Without it, the dependency age rules decide.",
       "title": "Lives With Household Until Age"
      },
      "full_time_student_ages": {
@@ -4863,10 +5069,12 @@
        }
       ],
       "default": null,
+      "description": "[first, last] ages as a full-time student (inclusive). Extends dependency to under 24 and decides the\neducation credit.",
       "title": "Full Time Student Ages"
      },
      "disabled": {
       "default": false,
+      "description": "Removes the age limits on dependency, the care credit, and Social Security child benefits.",
       "title": "Disabled",
       "type": "boolean"
      },
@@ -4884,6 +5092,7 @@
        }
       ],
       "default": null,
+      "description": "Members whose Social Security records can pay child benefits. Default: every member (for a child).",
       "title": "Child Of"
      }
     },
@@ -4898,13 +5107,16 @@
    },
    "DependentAgeAnchor": {
     "additionalProperties": false,
+    "description": "The year a dependent reaches an age.",
     "properties": {
      "dependent": {
+      "description": "A dependent id from household.yaml.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Dependent",
       "type": "string"
      },
      "age": {
+      "description": "May be fractional, counted in months from the birth month.",
       "maximum": 125,
       "minimum": 0,
       "title": "Age",
@@ -4954,8 +5166,10 @@
    },
    "DependentCareFsaElection": {
     "additionalProperties": false,
+    "description": "Pre-tax dependent-care savings, reimbursing spending tagged dependent_care in the same year.",
     "properties": {
      "annual": {
+      "description": "Amount set aside per year, in today's dollars. Any excess over that year's dependent_care spending is\nforfeited.",
       "minimum": 0,
       "title": "Annual",
       "type": "number"
@@ -4983,6 +5197,7 @@
        }
       ],
       "default": null,
+      "description": "An explicit end. The election also stops at the member's retirement or when no dependent is care-eligible.",
       "title": "Until"
      }
     },
@@ -5143,13 +5358,16 @@
    },
    "EmployerMatch": {
     "additionalProperties": false,
+    "description": "The employer's matching contribution, always deposited pre-tax.",
     "properties": {
      "account": {
+      "description": "The account that receives the match (typically the traditional 401(k)).",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
      },
      "tiers": {
+      "description": "Match tiers with increasing `up_to`, e.g. 100% of the first 3% of pay, then 50% of the next 2%.",
       "items": {
        "$ref": "#/components/schemas/MatchTier"
       },
@@ -5167,8 +5385,10 @@
    },
    "EventAnchor": {
     "additionalProperties": false,
+    "description": "The year of a member's retirement or death.",
     "properties": {
      "event": {
+      "description": "A death that doesn't happen within the plan never occurs.",
       "enum": [
        "retirement",
        "death"
@@ -5177,6 +5397,7 @@
       "type": "string"
      },
      "member": {
+      "description": "A member id from household.yaml.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Member",
       "type": "string"
@@ -5191,13 +5412,16 @@
    },
    "EventsDoc": {
     "additionalProperties": false,
+    "description": "Expected one-time events: windfalls, home sales, and inheritances.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "events": {
       "default": [],
+      "description": "Each event's `kind` is `windfall`, `home_sale`, or `inheritance`.",
       "items": {
        "discriminator": {
         "mapping": {
@@ -5353,6 +5577,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -5478,14 +5703,17 @@
    },
    "FillBracketConversions": {
     "additionalProperties": false,
+    "description": "Convert enough each year to fill an income tax bracket, after the year's other income.",
     "properties": {
      "start_year": {
+      "description": "The first year to convert.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Start Year",
       "type": "integer"
      },
      "end_year": {
+      "description": "The last year to convert (inclusive).",
       "maximum": 2200,
       "minimum": 1900,
       "title": "End Year",
@@ -5493,6 +5721,7 @@
      },
      "pay_tax_from": {
       "default": "taxable",
+      "description": "Pay the tax from taxable accounts, or withhold it from the conversion (penalized before 59 1/2).",
       "enum": [
        "taxable",
        "conversion"
@@ -5502,6 +5731,7 @@
      },
      "pairs": {
       "default": [],
+      "description": "Which accounts convert into which, in order. Default: each traditional IRA, then other traditional account,\ninto the same owner's Roth IRA (or Roth 401(k)).",
       "items": {
        "$ref": "#/components/schemas/ConversionPair"
       },
@@ -5514,6 +5744,7 @@
       "type": "string"
      },
      "bracket_rate": {
+      "description": "Convert up to the top of this ordinary bracket, e.g. 0.22.",
       "maximum": 1,
       "minimum": 0,
       "title": "Bracket Rate",
@@ -5521,6 +5752,7 @@
      },
      "respect_phase_outs": {
       "default": false,
+      "description": "Stop short of income levels where a credit or deduction the household gets starts to phase out (D28).",
       "title": "Respect Phase Outs",
       "type": "boolean"
      }
@@ -5536,14 +5768,17 @@
    },
    "FixedAmountConversions": {
     "additionalProperties": false,
+    "description": "Convert the same amount each year.",
     "properties": {
      "start_year": {
+      "description": "The first year to convert.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Start Year",
       "type": "integer"
      },
      "end_year": {
+      "description": "The last year to convert (inclusive).",
       "maximum": 2200,
       "minimum": 1900,
       "title": "End Year",
@@ -5551,6 +5786,7 @@
      },
      "pay_tax_from": {
       "default": "taxable",
+      "description": "Pay the tax from taxable accounts, or withhold it from the conversion (penalized before 59 1/2).",
       "enum": [
        "taxable",
        "conversion"
@@ -5560,6 +5796,7 @@
      },
      "pairs": {
       "default": [],
+      "description": "Which accounts convert into which, in order. Default: each traditional IRA, then other traditional account,\ninto the same owner's Roth IRA (or Roth 401(k)).",
       "items": {
        "$ref": "#/components/schemas/ConversionPair"
       },
@@ -5572,6 +5809,7 @@
       "type": "string"
      },
      "amount": {
+      "description": "Per year, in today's dollars.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -5596,6 +5834,7 @@
       "type": "string"
      },
      "death_ages": {
+      "description": "Age at death by member id, e.g. {alex: 88}. May be fractional.",
       "patternProperties": {
        "^[a-z][a-z0-9_]*$": {
         "maximum": 125,
@@ -5616,19 +5855,23 @@
    },
    "FlatStateTax": {
     "additionalProperties": false,
+    "description": "One rate on all taxable income.",
     "properties": {
      "indexed": {
       "default": true,
+      "description": "Whether brackets and standard deductions grow with inflation from the rules' base year.",
       "title": "Indexed",
       "type": "boolean"
      },
      "exempt_social_security": {
       "default": true,
+      "description": "Subtract the federally taxable part of Social Security benefits.",
       "title": "Exempt Social Security",
       "type": "boolean"
      },
      "capital_gains_exclusion": {
       "default": 0.0,
+      "description": "Share of net long-term capital gains excluded.",
       "maximum": 1,
       "minimum": 0,
       "title": "Capital Gains Exclusion",
@@ -5645,10 +5888,12 @@
        }
       ],
       "default": null,
+      "description": "Net capital losses deductible per year, if lower than federal. Default: the federal limit.",
       "title": "Capital Loss Limit"
      },
      "retirement_income_exclusions": {
       "default": [],
+      "description": "Subtractions of pension and retirement-account income, applied in order.",
       "items": {
        "$ref": "#/components/schemas/RetirementIncomeExclusion"
       },
@@ -5657,11 +5902,13 @@
      },
      "subtract_health_premiums": {
       "default": false,
+      "description": "Subtract health insurance premiums paid with after-tax money (including Medicare and Medigap).",
       "title": "Subtract Health Premiums",
       "type": "boolean"
      },
      "additional_tax_share": {
       "default": 0.0,
+      "description": "State tax as a share of the federal early-withdrawal and HSA additional taxes.",
       "maximum": 1,
       "minimum": 0,
       "title": "Additional Tax Share",
@@ -5676,7 +5923,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A subtraction for 529 contributions."
      },
      "standard_deduction": {
       "anyOf": [
@@ -5687,7 +5935,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A fixed standard deduction. Give this or `sliding_standard_deduction`, or neither."
      },
      "sliding_standard_deduction": {
       "anyOf": [
@@ -5698,7 +5947,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A standard deduction that shrinks as income rises."
      },
      "personal_exemptions": {
       "anyOf": [
@@ -5709,7 +5959,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Amounts subtracted per person."
      },
      "married_couple_credit": {
       "anyOf": [
@@ -5720,7 +5971,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A credit for two-earner couples filing jointly."
      },
      "dependent_care_credit": {
       "anyOf": [
@@ -5731,7 +5983,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A state child and dependent care credit."
      },
      "kind": {
       "const": "flat",
@@ -5739,6 +5992,7 @@
       "type": "string"
      },
      "rate": {
+      "description": "The tax rate, e.g. 0.0495.",
       "maximum": 1,
       "minimum": 0,
       "title": "Rate",
@@ -5877,6 +6131,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -5898,16 +6153,20 @@
    },
    "GoalsDoc": {
     "additionalProperties": false,
+    "description": "What counts as success in Monte Carlo, and how legacy is valued. Every scenario of the profile uses it.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "success": {
-      "$ref": "#/components/schemas/SuccessCriteria"
+      "$ref": "#/components/schemas/SuccessCriteria",
+      "description": "The success criteria."
      },
      "legacy": {
-      "$ref": "#/components/schemas/Legacy"
+      "$ref": "#/components/schemas/Legacy",
+      "description": "How legacy is valued after tax."
      }
     },
     "required": [
@@ -5982,6 +6241,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -6019,9 +6279,10 @@
    },
    "HealthcareProfileDoc": {
     "additionalProperties": false,
-    "description": "A profile's overrides of the rules' default healthcare assumptions (every field optional).",
+    "description": "The household's healthcare cost assumptions, replacing the defaults in rules/healthcare.yaml. Every field is\noptional; amounts are annual, in today's dollars, and grow with healthcare inflation.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -6036,6 +6297,7 @@
        }
       ],
       "default": null,
+      "description": "The household's share of employer coverage while anyone works, paid pre-tax.",
       "title": "Employer Premium"
      },
      "individual_premium_age_40": {
@@ -6049,6 +6311,7 @@
        }
       ],
       "default": null,
+      "description": "Unsubsidized individual-market premium per person at age 40, before 65 with no employer coverage. Other ages\nfollow the ACA age curve.",
       "title": "Individual Premium Age 40"
      },
      "part_d_premium": {
@@ -6062,6 +6325,7 @@
        }
       ],
       "default": null,
+      "description": "Medicare Part D plan premium per person, before any IRMAA surcharge.",
       "title": "Part D Premium"
      },
      "supplement_premium": {
@@ -6075,6 +6339,7 @@
        }
       ],
       "default": null,
+      "description": "Medigap (or similar) premium per person from 65.",
       "title": "Supplement Premium"
      },
      "out_of_pocket_under_65": {
@@ -6088,6 +6353,7 @@
        }
       ],
       "default": null,
+      "description": "Deductibles, copays, and uncovered care per person before 65.",
       "title": "Out Of Pocket Under 65"
      },
      "out_of_pocket_65_plus": {
@@ -6101,6 +6367,7 @@
        }
       ],
       "default": null,
+      "description": "Out-of-pocket costs per person from 65.",
       "title": "Out Of Pocket 65 Plus"
      },
      "dependent_coverage_until_age": {
@@ -6113,6 +6380,7 @@
        }
       ],
       "default": null,
+      "description": "Dependents are covered (and cost premiums) through the year before this age.",
       "title": "Dependent Coverage Until Age"
      },
      "hsa_medical": {
@@ -6130,6 +6398,7 @@
        }
       ],
       "default": null,
+      "description": "When HSAs pay qualified medical costs tax-free: once the owner retires, always, or never.",
       "title": "Hsa Medical"
      }
     },
@@ -6143,6 +6412,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -6205,6 +6475,7 @@
     "description": "Sale of a home: gain above the \u00a7121 exclusion is a long-term gain; an attached mortgage is paid off.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -6224,9 +6495,11 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "when": {
+      "description": "The year of the sale.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -6244,6 +6517,7 @@
       "title": "When"
      },
      "price": {
+      "description": "The sale price in today's dollars, grown by `appreciation` to the sale year.",
       "minimum": 0,
       "title": "Price",
       "type": "number"
@@ -6259,15 +6533,18 @@
        }
       ],
       "default": "general",
+      "description": "Annual price growth: a rate, or `general` to follow inflation.",
       "title": "Appreciation"
      },
      "cost_basis": {
+      "description": "Purchase price plus improvements, in actual dollars.",
       "minimum": 0,
       "title": "Cost Basis",
       "type": "number"
      },
      "selling_costs": {
       "default": 0.06,
+      "description": "Commissions and closing costs, as a share of the price.",
       "maximum": 1,
       "minimum": 0,
       "title": "Selling Costs",
@@ -6284,6 +6561,7 @@
        }
       ],
       "default": null,
+      "description": "A liability id repaid from the proceeds, e.g. the mortgage.",
       "title": "Pay Off"
      }
     },
@@ -6299,8 +6577,10 @@
    },
    "Horizon": {
     "additionalProperties": false,
+    "description": "The years simulated.",
     "properties": {
      "start_year": {
+      "description": "The first simulated year. Balances are as of its start, and \"today's dollars\" are its dollars.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Start Year",
@@ -6308,6 +6588,7 @@
      },
      "end_age": {
       "default": 95,
+      "description": "Simulate until every member has reached this age.",
       "maximum": 120,
       "minimum": 50,
       "title": "End Age",
@@ -6325,6 +6606,7 @@
        }
       ],
       "default": null,
+      "description": "Or simulate until this year instead.",
       "title": "End Year"
      }
     },
@@ -6336,15 +6618,19 @@
    },
    "HouseholdDoc": {
     "additionalProperties": false,
+    "description": "Who is in the household: members, dependents, filing status, and state of residence.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "household": {
-      "$ref": "#/components/schemas/HouseholdInfo"
+      "$ref": "#/components/schemas/HouseholdInfo",
+      "description": "Filing status and state of residence."
      },
      "members": {
+      "description": "One or two adults.",
       "items": {
        "$ref": "#/components/schemas/Member"
       },
@@ -6355,6 +6641,7 @@
      },
      "dependents": {
       "default": [],
+      "description": "Children or other relatives the household supports.",
       "items": {
        "$ref": "#/components/schemas/Dependent"
       },
@@ -6374,10 +6661,12 @@
     "additionalProperties": false,
     "properties": {
      "filing_status": {
-      "$ref": "#/components/schemas/FilingStatus"
+      "$ref": "#/components/schemas/FilingStatus",
+      "description": "Two members file jointly or separately; one member files single, head of household, or as a qualifying\nsurviving spouse. After a death the survivor's status changes automatically."
      },
      "state": {
       "default": "none",
+      "description": "State of residence: a key in rules/state_tax.yaml (`none` for no state income tax).",
       "title": "State",
       "type": "string"
      }
@@ -6388,16 +6677,76 @@
     "title": "HouseholdInfo",
     "type": "object"
    },
+   "HsaAccount": {
+    "additionalProperties": false,
+    "description": "A Health Savings Account.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "asset_strategy": {
+      "description": "How the account is invested: a static_allocation or a target_date glide path.",
+      "discriminator": {
+       "mapping": {
+        "static_allocation": "#/components/schemas/StaticAllocation",
+        "target_date": "#/components/schemas/TargetDateStrategy"
+       },
+       "propertyName": "kind"
+      },
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/TargetDateStrategy"
+       },
+       {
+        "$ref": "#/components/schemas/StaticAllocation"
+       }
+      ],
+      "title": "Asset Strategy"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance",
+     "asset_strategy"
+    ],
+    "title": "HsaAccount",
+    "type": "object"
+   },
    "HsaElection": {
     "additionalProperties": false,
     "description": "Payroll HSA contribution (excluded from income tax and FICA). Employer money counts toward the limit.",
     "properties": {
      "account": {
+      "description": "The member's HSA.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
      },
      "coverage": {
+      "description": "The HDHP coverage, which sets the limit. With family coverage, spouses share one family limit.",
       "enum": [
        "self_only",
        "family"
@@ -6416,20 +6765,24 @@
        }
       ],
       "default": null,
+      "description": "Employee contribution per year, in today's dollars.",
       "title": "Amount"
      },
      "max": {
       "default": false,
+      "description": "Contribute the indexed limit for the coverage, less the employer contribution.",
       "title": "Max",
       "type": "boolean"
      },
      "include_catch_up": {
       "default": false,
+      "description": "Add the age 55+ catch-up when eligible.",
       "title": "Include Catch Up",
       "type": "boolean"
      },
      "employer": {
       "default": 0.0,
+      "description": "The employer's contribution per year, in today's dollars.",
       "minimum": 0,
       "title": "Employer",
       "type": "number"
@@ -6487,13 +6840,16 @@
    },
    "IncomeDoc": {
     "additionalProperties": false,
+    "description": "Salaries (with payroll elections), pensions, and other income. Social Security comes from household.yaml.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "income_streams": {
       "default": [],
+      "description": "Each stream's `type` is `salary`, `pension`, or `other`.",
       "items": {
        "discriminator": {
         "mapping": {
@@ -6545,8 +6901,10 @@
    },
    "InheritanceEvent": {
     "additionalProperties": false,
+    "description": "Money or an IRA inherited from someone outside the household.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -6566,9 +6924,11 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "when": {
+      "description": "The year it's inherited.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -6586,12 +6946,14 @@
       "title": "When"
      },
      "amount": {
+      "description": "The value inherited.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
      },
      "dollars": {
       "default": "today",
+      "description": "`today`: grown with inflation to the event year; `nominal`: that year's dollars.",
       "enum": [
        "today",
        "nominal"
@@ -6600,11 +6962,13 @@
       "type": "string"
      },
      "beneficiary": {
+      "description": "The member who inherits.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Beneficiary",
       "type": "string"
      },
      "asset": {
+      "description": "`cash` (tax-free), `brokerage` (with a stepped-up basis), or `inherited_ira` (opens a new inherited IRA).",
       "enum": [
        "cash",
        "brokerage",
@@ -6624,10 +6988,12 @@
        }
       ],
       "default": null,
+      "description": "For `brokerage`, an existing brokerage account to receive it; for `inherited_ira`, the new account's id.",
       "title": "Account"
      },
      "decedent_started_rmds": {
       "default": true,
+      "description": "For `inherited_ira`: whether the original owner had started RMDs (then annual RMDs apply in years 1-9).",
       "title": "Decedent Started Rmds",
       "type": "boolean"
      },
@@ -6655,6 +7021,7 @@
        }
       ],
       "default": null,
+      "description": "For `inherited_ira`: how it's invested. Default: 60% stocks, 40% bonds.",
       "title": "Asset Strategy"
      }
     },
@@ -6696,12 +7063,85 @@
     "title": "Inherited10YearRule",
     "type": "object"
    },
+   "InheritedAccount": {
+    "additionalProperties": false,
+    "description": "An IRA inherited from someone other than a spouse, under the 10-year rule.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "asset_strategy": {
+      "description": "How the account is invested: a static_allocation or a target_date glide path.",
+      "discriminator": {
+       "mapping": {
+        "static_allocation": "#/components/schemas/StaticAllocation",
+        "target_date": "#/components/schemas/TargetDateStrategy"
+       },
+       "propertyName": "kind"
+      },
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/TargetDateStrategy"
+       },
+       {
+        "$ref": "#/components/schemas/StaticAllocation"
+       }
+      ],
+      "title": "Asset Strategy"
+     },
+     "inherited_year": {
+      "description": "The year it was inherited; the 10-year clock starts from it.",
+      "maximum": 2200,
+      "minimum": 1900,
+      "title": "Inherited Year",
+      "type": "integer"
+     },
+     "decedent_started_rmds": {
+      "description": "Whether the original owner had started RMDs. If so, annual RMDs also apply in years 1-9.",
+      "title": "Decedent Started Rmds",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance",
+     "asset_strategy",
+     "inherited_year",
+     "decedent_started_rmds"
+    ],
+    "title": "InheritedAccount",
+    "type": "object"
+   },
    "InheritedIraStrategy": {
     "additionalProperties": false,
     "description": "How inherited IRAs are drawn down inside the 10-year window (required annual RMDs always apply).",
     "properties": {
      "kind": {
       "default": "even",
+      "description": "`even` spreads it over the years left; `minimum_then_final` takes only required amounts until year 10;\n`fill_bracket` withdraws up to a bracket each year.",
       "enum": [
        "even",
        "minimum_then_final",
@@ -6722,6 +7162,7 @@
        }
       ],
       "default": null,
+      "description": "For `fill_bracket`: withdraw up to the top of this ordinary bracket, e.g. 0.22.",
       "title": "Bracket Rate"
      }
     },
@@ -6733,6 +7174,7 @@
     "description": "Interest-only debt repaid as a lump sum at `payoff`.",
     "properties": {
      "id": {
+      "description": "Shown in results; events can pay the loan off by this id.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -6752,20 +7194,24 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "balance": {
+      "description": "The balance owed, repaid in full at `payoff`.",
       "minimum": 0,
       "title": "Balance",
       "type": "number"
      },
      "annual_rate": {
+      "description": "The interest rate, e.g. 0.07.",
       "maximum": 1,
       "minimum": 0,
       "title": "Annual Rate",
       "type": "number"
      },
      "payoff": {
+      "description": "When the balance is repaid as a lump sum.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -6958,9 +7404,11 @@
    },
    "Legacy": {
     "additionalProperties": false,
+    "description": "How the money left at the end is valued.",
     "properties": {
      "heirs_tax_rate": {
       "default": 0.25,
+      "description": "Income tax rate heirs pay on inherited pre-tax money (traditional retirement accounts and HSAs).",
       "maximum": 1,
       "minimum": 0,
       "title": "Heirs Tax Rate",
@@ -6972,9 +7420,11 @@
    },
    "Levers": {
     "additionalProperties": false,
+    "description": "The decisions a scenario tests.",
     "properties": {
      "ss_claim_ages": {
       "default": {},
+      "description": "Social Security claiming age by member id: 67, or {years: 67, months: 6}. Default: full retirement age.",
       "patternProperties": {
        "^[a-z][a-z0-9_]*$": {
         "$ref": "#/components/schemas/ClaimAge"
@@ -6987,6 +7437,7 @@
       "default": {
        "kind": "none"
       },
+      "description": "Lifespans: `none` (everyone reaches the end of the plan), `fixed` ages, or `sampled` from the life table.",
       "discriminator": {
        "mapping": {
         "fixed": "#/components/schemas/FixedMortality",
@@ -7010,6 +7461,7 @@
      },
      "relocations": {
       "default": [],
+      "description": "Moves to another state, in order.",
       "items": {
        "$ref": "#/components/schemas/Relocation"
       },
@@ -7023,6 +7475,7 @@
        "roth",
        "hsa"
       ],
+      "description": "The order accounts are drawn on to cover a shortfall: each of taxable, deferred, roth, and hsa once.",
       "items": {
        "enum": [
         "taxable",
@@ -7037,6 +7490,7 @@
      },
      "early_withdrawals": {
       "default": "allow_with_penalty",
+      "description": "Before 59 1/2 (65 for HSAs): withdraw and pay the additional tax, or skip those accounts.",
       "enum": [
        "allow_with_penalty",
        "block"
@@ -7046,6 +7500,7 @@
      },
      "surplus_sweep": {
       "default": [],
+      "description": "Where leftover cash is invested, in order. Default: the first brokerage account (else the first cash\naccount).",
       "items": {
        "$ref": "#/components/schemas/SweepTarget"
       },
@@ -7061,12 +7516,14 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "An emergency fund that withdrawals leave alone until everything else is used up."
      },
      "roth_conversions": {
       "default": {
        "kind": "none"
       },
+      "description": "Roth conversions: `none`, `fixed_amount`, or `fill_bracket`.",
       "discriminator": {
        "mapping": {
         "fill_bracket": "#/components/schemas/FillBracketConversions",
@@ -7093,10 +7550,12 @@
       "default": {
        "kind": "even",
        "bracket_rate": null
-      }
+      },
+      "description": "How inherited IRAs are drawn down within the 10-year window."
      },
      "contributions": {
       "default": [],
+      "description": "Recurring contributions outside payroll: IRAs, 529s, brokerage.",
       "items": {
        "$ref": "#/components/schemas/Contribution"
       },
@@ -7105,6 +7564,7 @@
      },
      "plan_529_leftover": {
       "default": "keep",
+      "description": "What happens to a 529 once its beneficiary's qualified_education spending has ended.",
       "enum": [
        "keep",
        "change_beneficiary",
@@ -7120,8 +7580,10 @@
    },
    "LiabilitiesDoc": {
     "additionalProperties": false,
+    "description": "Mortgages and other loans. Payments are made in addition to spending.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -7152,6 +7614,7 @@
         "type": "null"
        }
       ],
+      "description": "Each loan's `kind` is `amortizing` or `interest_only`.",
       "title": "Liabilities"
      }
     },
@@ -7188,6 +7651,7 @@
     "description": "Year-end liquid assets (unswept cash plus cash and brokerage accounts) must stay at or above `amount`.",
     "properties": {
      "amount": {
+      "description": "The floor, in today's dollars.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -7215,6 +7679,7 @@
        }
       ],
       "default": null,
+      "description": "The first year the floor applies. Default: the start of the plan.",
       "title": "Start"
      }
     },
@@ -7226,12 +7691,14 @@
    },
    "Macro": {
     "additionalProperties": false,
+    "description": "Economic assumptions outside the market preset.",
     "properties": {
      "salary_growth": {
       "$ref": "#/components/schemas/SalaryGrowth",
       "default": {
        "real_growth_rate": 0.0
-      }
+      },
+      "description": "Default salary growth."
      }
     },
     "title": "Macro",
@@ -7241,6 +7708,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -7368,9 +7836,11 @@
    },
    "MarketSelection": {
     "additionalProperties": false,
+    "description": "Market assumptions: a preset from rules/market_assumptions.yaml, with optional changes.",
     "properties": {
      "preset": {
       "default": "forward_conservative",
+      "description": "`forward_conservative`, `historical_us`, `pessimistic`, or `bootstrap` (historical years).",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Preset",
       "type": "string"
@@ -7378,11 +7848,13 @@
      "overrides": {
       "additionalProperties": true,
       "default": {},
+      "description": "Dotted-path changes to preset fields, e.g. {\"factors.stocks.mean\": 0.06}.",
       "title": "Overrides",
       "type": "object"
      },
      "deterministic_returns": {
       "default": "geometric",
+      "description": "The constant return per asset class in deterministic runs: the geometric mean implied by the preset (a typical\ncompounded outcome) or the arithmetic mean.",
       "enum": [
        "geometric",
        "arithmetic"
@@ -7399,12 +7871,14 @@
     "description": "A share of the lower-earning spouse's earned income, up to a cap (joint returns).",
     "properties": {
      "rate": {
+      "description": "Share of the lower earner's wages.",
       "maximum": 1,
       "minimum": 0,
       "title": "Rate",
       "type": "number"
      },
      "earned_income_cap": {
+      "description": "Wages counted at most.",
       "minimum": 0,
       "title": "Earned Income Cap",
       "type": "number"
@@ -7422,12 +7896,14 @@
     "description": "Employer matches `match` of each dollar deferred, on deferrals up to `up_to` of pay (cumulative).",
     "properties": {
      "match": {
+      "description": "Employer dollars per employee dollar deferred in this tier, e.g. 0.5.",
       "maximum": 3,
       "minimum": 0,
       "title": "Match",
       "type": "number"
      },
      "up_to": {
+      "description": "The tier covers deferrals up to this share of pay, counting from the previous tier's `up_to`.",
       "maximum": 1,
       "minimum": 0,
       "title": "Up To",
@@ -7474,27 +7950,32 @@
     "description": "An adult in the household who can own accounts, earn income, and claim Social Security.",
     "properties": {
      "id": {
+      "description": "How other documents refer to this person.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
      },
      "name": {
+      "description": "Display name.",
       "title": "Name",
       "type": "string"
      },
      "birth_year": {
+      "description": "Year of birth.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Birth Year",
       "type": "integer"
      },
      "birth_month": {
+      "description": "1-12. Used for age 59 1/2, Social Security claiming months, and retirement proration.",
       "maximum": 12,
       "minimum": 1,
       "title": "Birth Month",
       "type": "integer"
      },
      "target_retirement_age": {
+      "description": "When salary stops (prorated by month in that year). May be fractional, e.g. 62.5.",
       "maximum": 125,
       "minimum": 0,
       "title": "Target Retirement Age",
@@ -7509,7 +7990,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "The member's own Social Security record. Leave out if they have none; spousal and survivor benefits still\napply."
      },
      "sex": {
       "anyOf": [
@@ -7525,6 +8007,7 @@
        }
       ],
       "default": null,
+      "description": "Picks the life table when lifespans are sampled. Without it, the average of both tables is used.",
       "title": "Sex"
      }
     },
@@ -7540,13 +8023,16 @@
    },
    "MemberAgeAnchor": {
     "additionalProperties": false,
+    "description": "The year a household member reaches an age.",
     "properties": {
      "member": {
+      "description": "A member id from household.yaml.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Member",
       "type": "string"
      },
      "age": {
+      "description": "May be fractional (62.5), counted in months from the birth month.",
       "maximum": 125,
       "minimum": 0,
       "title": "Age",
@@ -7605,6 +8091,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -7664,10 +8151,12 @@
    },
    "NoConversions": {
     "additionalProperties": false,
+    "description": "No Roth conversions.",
     "properties": {
      "kind": {
       "const": "none",
       "default": "none",
+      "description": "`none`, `fixed_amount`, or `fill_bracket`.",
       "title": "Kind",
       "type": "string"
      }
@@ -7682,6 +8171,7 @@
      "kind": {
       "const": "none",
       "default": "none",
+      "description": "`none`, `fixed`, or `sampled`.",
       "title": "Kind",
       "type": "string"
      }
@@ -7691,6 +8181,7 @@
    },
    "NoStateTax": {
     "additionalProperties": false,
+    "description": "No state income tax.",
     "properties": {
      "kind": {
       "const": "none",
@@ -7749,13 +8240,16 @@
    },
    "OtherIncomeStream": {
     "additionalProperties": false,
+    "description": "Any other income: rental income, part-time work, gifts. No FICA.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
      },
      "owner": {
+      "description": "A member id, or `joint`.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Owner",
       "type": "string"
@@ -7775,9 +8269,11 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "amount": {
+      "description": "Per year, in today's dollars.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -7805,6 +8301,7 @@
        }
       ],
       "default": null,
+      "description": "When it starts. Default: the start of the plan.",
       "title": "Start"
      },
      "end": {
@@ -7830,10 +8327,12 @@
        }
       ],
       "default": null,
+      "description": "When it ends (inclusive). Default: the end of the plan.",
       "title": "End"
      },
      "index": {
       "default": "general",
+      "description": "`general` grows with inflation; `none` stays at a fixed nominal amount.",
       "enum": [
        "general",
        "none"
@@ -7843,6 +8342,7 @@
      },
      "tax_character": {
       "default": "ordinary",
+      "description": "`ordinary` is taxed as ordinary income.",
       "enum": [
        "ordinary",
        "tax_free"
@@ -7870,9 +8370,11 @@
    },
    "PayrollElections": {
     "additionalProperties": false,
+    "description": "Contributions taken from pay. They stop when the salary does.",
     "properties": {
      "retirement_deferrals": {
       "default": [],
+      "description": "401(k)-type deferrals, one per account. Only one may use `max`.",
       "items": {
        "$ref": "#/components/schemas/RetirementDeferral"
       },
@@ -7888,7 +8390,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "The employer's matching contribution."
      },
      "hsa": {
       "anyOf": [
@@ -7899,7 +8402,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Payroll HSA contributions."
      },
      "dependent_care_fsa": {
       "anyOf": [
@@ -7910,7 +8414,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A dependent-care FSA election."
      }
     },
     "title": "PayrollElections",
@@ -7962,13 +8467,16 @@
    },
    "PensionStream": {
     "additionalProperties": false,
+    "description": "A defined-benefit pension, taxed as ordinary income.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
      },
      "owner": {
+      "description": "The member who earned it.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Owner",
       "type": "string"
@@ -7979,11 +8487,13 @@
       "type": "string"
      },
      "annual_amount": {
+      "description": "The annual benefit when it starts, in that year's dollars (not today's).",
       "minimum": 0,
       "title": "Annual Amount",
       "type": "number"
      },
      "start": {
+      "description": "When payments begin.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -8011,10 +8521,12 @@
        }
       ],
       "default": 0.0,
+      "description": "Annual increase once it starts: a fixed rate, or `cpi` to follow inflation.",
       "title": "Cola"
      },
      "survivor_fraction": {
       "default": 0.0,
+      "description": "The share that continues to a surviving spouse.",
       "maximum": 1,
       "minimum": 0,
       "title": "Survivor Fraction",
@@ -8033,26 +8545,31 @@
    },
    "PersonalExemptions": {
     "additionalProperties": false,
+    "description": "Fixed amounts subtracted per person after the standard deduction.",
     "properties": {
      "per_person": {
+      "description": "Per member alive during the year.",
       "minimum": 0,
       "title": "Per Person",
       "type": "number"
      },
      "per_dependent": {
       "default": 0.0,
+      "description": "Per dependent claimed that year.",
       "minimum": 0,
       "title": "Per Dependent",
       "type": "number"
      },
      "additional_age_65": {
       "default": 0.0,
+      "description": "Extra per member 65 or older.",
       "minimum": 0,
       "title": "Additional Age 65",
       "type": "number"
      },
      "indexed": {
       "default": false,
+      "description": "Whether the exemptions grow with inflation.",
       "title": "Indexed",
       "type": "boolean"
      }
@@ -8078,9 +8595,11 @@
        }
       ],
       "default": null,
+      "description": "The band applies through this age of the reference member (inclusive). Leave out on the last band.",
       "title": "Until Age"
      },
      "multiplier": {
+      "description": "Base spending is multiplied by this, e.g. 0.85.",
       "minimum": 0,
       "title": "Multiplier",
       "type": "number"
@@ -8113,16 +8632,99 @@
     "title": "PhaseOutRange",
     "type": "object"
    },
+   "Plan529Account": {
+    "additionalProperties": false,
+    "description": "A 529 education savings plan.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "asset_strategy": {
+      "description": "How the account is invested: a static_allocation or a target_date glide path.",
+      "discriminator": {
+       "mapping": {
+        "static_allocation": "#/components/schemas/StaticAllocation",
+        "target_date": "#/components/schemas/TargetDateStrategy"
+       },
+       "propertyName": "kind"
+      },
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/TargetDateStrategy"
+       },
+       {
+        "$ref": "#/components/schemas/StaticAllocation"
+       }
+      ],
+      "title": "Asset Strategy"
+     },
+     "beneficiary": {
+      "description": "A dependent (or a member, for adult education).",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Beneficiary",
+      "type": "string"
+     },
+     "cost_basis": {
+      "description": "Contributions to date, which set the taxable earnings share of a non-qualified withdrawal.",
+      "minimum": 0,
+      "title": "Cost Basis",
+      "type": "number"
+     },
+     "opened_year": {
+      "description": "For the 15-year rule on rollovers to a Roth IRA.",
+      "maximum": 2200,
+      "minimum": 1900,
+      "title": "Opened Year",
+      "type": "integer"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance",
+     "asset_strategy",
+     "beneficiary",
+     "cost_basis",
+     "opened_year"
+    ],
+    "title": "Plan529Account",
+    "type": "object"
+   },
    "Plan529Deduction": {
     "additionalProperties": false,
+    "description": "A subtraction for contributions to 529 plans.",
     "properties": {
      "cap": {
+      "description": "The most deducted per year, per beneficiary or per return.",
       "minimum": 0,
       "title": "Cap",
       "type": "number"
      },
      "per": {
       "default": "beneficiary",
+      "description": "Whether `cap` applies per beneficiary or per return.",
       "enum": [
        "return",
        "beneficiary"
@@ -8141,21 +8743,25 @@
        }
       ],
       "default": null,
+      "description": "A different cap for married filing separately. Default: `cap`.",
       "title": "Married Filing Separately Cap"
      },
      "indexed": {
       "default": false,
+      "description": "Whether the cap grows with inflation.",
       "title": "Indexed",
       "type": "boolean"
      },
      "rounding": {
       "default": 10,
+      "description": "An indexed cap is rounded to a multiple of this.",
       "minimum": 0,
       "title": "Rounding",
       "type": "number"
      },
      "carryforward": {
       "default": false,
+      "description": "Contributions over the cap can be deducted in later years.",
       "title": "Carryforward",
       "type": "boolean"
      }
@@ -8195,13 +8801,16 @@
    },
    "PostTarget": {
     "additionalProperties": false,
+    "description": "After the target year, keep reducing the stock share in a straight line.",
     "properties": {
      "years_after": {
+      "description": "Years after the target year to reach `final_equity`.",
       "exclusiveMinimum": 0,
       "title": "Years After",
       "type": "integer"
      },
      "final_equity": {
+      "description": "The final stock share.",
       "maximum": 1,
       "minimum": 0,
       "title": "Final Equity",
@@ -8217,19 +8826,23 @@
    },
    "ProgressiveStateTax": {
     "additionalProperties": false,
+    "description": "Bracketed rates by filing status.",
     "properties": {
      "indexed": {
       "default": true,
+      "description": "Whether brackets and standard deductions grow with inflation from the rules' base year.",
       "title": "Indexed",
       "type": "boolean"
      },
      "exempt_social_security": {
       "default": true,
+      "description": "Subtract the federally taxable part of Social Security benefits.",
       "title": "Exempt Social Security",
       "type": "boolean"
      },
      "capital_gains_exclusion": {
       "default": 0.0,
+      "description": "Share of net long-term capital gains excluded.",
       "maximum": 1,
       "minimum": 0,
       "title": "Capital Gains Exclusion",
@@ -8246,10 +8859,12 @@
        }
       ],
       "default": null,
+      "description": "Net capital losses deductible per year, if lower than federal. Default: the federal limit.",
       "title": "Capital Loss Limit"
      },
      "retirement_income_exclusions": {
       "default": [],
+      "description": "Subtractions of pension and retirement-account income, applied in order.",
       "items": {
        "$ref": "#/components/schemas/RetirementIncomeExclusion"
       },
@@ -8258,11 +8873,13 @@
      },
      "subtract_health_premiums": {
       "default": false,
+      "description": "Subtract health insurance premiums paid with after-tax money (including Medicare and Medigap).",
       "title": "Subtract Health Premiums",
       "type": "boolean"
      },
      "additional_tax_share": {
       "default": 0.0,
+      "description": "State tax as a share of the federal early-withdrawal and HSA additional taxes.",
       "maximum": 1,
       "minimum": 0,
       "title": "Additional Tax Share",
@@ -8277,7 +8894,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A subtraction for 529 contributions."
      },
      "standard_deduction": {
       "anyOf": [
@@ -8288,7 +8906,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A fixed standard deduction. Give this or `sliding_standard_deduction`, or neither."
      },
      "sliding_standard_deduction": {
       "anyOf": [
@@ -8299,7 +8918,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A standard deduction that shrinks as income rises."
      },
      "personal_exemptions": {
       "anyOf": [
@@ -8310,7 +8930,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Amounts subtracted per person."
      },
      "married_couple_credit": {
       "anyOf": [
@@ -8321,7 +8942,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A credit for two-earner couples filing jointly."
      },
      "dependent_care_credit": {
       "anyOf": [
@@ -8332,7 +8954,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "A state child and dependent care credit."
      },
      "kind": {
       "const": "progressive",
@@ -8340,7 +8963,8 @@
       "type": "string"
      },
      "brackets": {
-      "$ref": "#/components/schemas/ByFilingStatus_Annotated_tuple_tuple_float__float____________AfterValidator__"
+      "$ref": "#/components/schemas/ByFilingStatus_Annotated_tuple_tuple_float__float____________AfterValidator__",
+      "description": "For each filing status, [[upper bound of taxable income, rate], ...], ending with [.inf, top rate]."
      }
     },
     "required": [
@@ -8398,8 +9022,10 @@
    },
    "Relocation": {
     "additionalProperties": false,
+    "description": "A move to another state.",
     "properties": {
      "when": {
+      "description": "The year of the move.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -8417,6 +9043,7 @@
       "title": "When"
      },
      "state": {
+      "description": "A key in rules/state_tax.yaml.",
       "title": "State",
       "type": "string"
      }
@@ -8428,11 +9055,70 @@
     "title": "Relocation",
     "type": "object"
    },
+   "RetirementAccount": {
+    "additionalProperties": false,
+    "description": "A 401(k) or IRA, traditional or Roth.",
+    "properties": {
+     "id": {
+      "description": "How income elections, levers, and events refer to the account.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Id",
+      "type": "string"
+     },
+     "owner": {
+      "description": "A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Owner",
+      "type": "string"
+     },
+     "type": {
+      "description": "An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.",
+      "pattern": "^[a-z][a-z0-9_]*$",
+      "title": "Type",
+      "type": "string"
+     },
+     "balance": {
+      "description": "Balance at the start of the scenario's first year.",
+      "minimum": 0,
+      "title": "Balance",
+      "type": "number"
+     },
+     "asset_strategy": {
+      "description": "How the account is invested: a static_allocation or a target_date glide path.",
+      "discriminator": {
+       "mapping": {
+        "static_allocation": "#/components/schemas/StaticAllocation",
+        "target_date": "#/components/schemas/TargetDateStrategy"
+       },
+       "propertyName": "kind"
+      },
+      "oneOf": [
+       {
+        "$ref": "#/components/schemas/TargetDateStrategy"
+       },
+       {
+        "$ref": "#/components/schemas/StaticAllocation"
+       }
+      ],
+      "title": "Asset Strategy"
+     }
+    },
+    "required": [
+     "id",
+     "owner",
+     "type",
+     "balance",
+     "asset_strategy"
+    ],
+    "title": "RetirementAccount",
+    "type": "object"
+   },
    "RetirementDeferral": {
     "additionalProperties": false,
     "description": "Employee 401(k)-type deferral into one account. Traditional deferrals reduce taxable wages; Roth don't.",
     "properties": {
      "account": {
+      "description": "A traditional or Roth 401(k)-type account owned by the salary's owner.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
@@ -8449,6 +9135,7 @@
        }
       ],
       "default": null,
+      "description": "Share of gross salary, e.g. 0.08.",
       "title": "Percent"
      },
      "amount": {
@@ -8462,15 +9149,18 @@
        }
       ],
       "default": null,
+      "description": "Per year, in today's dollars.",
       "title": "Amount"
      },
      "max": {
       "default": false,
+      "description": "Defer the indexed elective-deferral limit, less the member's other deferrals.",
       "title": "Max",
       "type": "boolean"
      },
      "include_catch_up": {
       "default": false,
+      "description": "Add the age 50+ (or larger age 60-63) catch-up when eligible.",
       "title": "Include Catch Up",
       "type": "boolean"
      },
@@ -8485,6 +9175,7 @@
        }
       ],
       "default": null,
+      "description": "Where catch-ups go when SECURE 2.0 requires them to be Roth (prior-year wages over the indexed threshold).\nRequired for a traditional account with catch-ups.",
       "title": "Roth Catch Up Account"
      }
     },
@@ -8499,11 +9190,13 @@
     "description": "Per-person subtraction of pensions and traditional-account distributions (including RMDs, inherited IRAs,\nand Roth conversions). Several apply in order, each to the retirement income the earlier ones left.",
     "properties": {
      "amount": {
+      "description": "The most excluded per qualifying person. Not indexed.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
      },
      "min_age": {
+      "description": "A member qualifies from this age (at the end of the year).",
       "maximum": 125,
       "minimum": 0,
       "title": "Min Age",
@@ -8518,15 +9211,18 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Only households with federal AGI below this qualify. Default: no income limit."
      },
      "pooled_for_joint": {
       "default": false,
+      "description": "On a joint return where both spouses qualify, they share one cap of twice `amount`, whoever received the\nincome.",
       "title": "Pooled For Joint",
       "type": "boolean"
      },
      "bars_credits": {
       "default": false,
+      "description": "Claiming it forfeits the state's credits that year. It's optional, so the engine takes the lower tax.",
       "title": "Bars Credits",
       "type": "boolean"
      }
@@ -8542,6 +9238,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -8639,6 +9336,7 @@
     "properties": {
      "real_growth_rate": {
       "default": 0.0,
+      "description": "Annual raise above inflation, for salaries that don't set their own.",
       "title": "Real Growth Rate",
       "type": "number"
      }
@@ -8648,13 +9346,16 @@
    },
    "SalaryStream": {
     "additionalProperties": false,
+    "description": "Wages from a job, with payroll elections. Pays FICA.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
      },
      "owner": {
+      "description": "The member who earns it.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Owner",
       "type": "string"
@@ -8665,6 +9366,7 @@
       "type": "string"
      },
      "amount": {
+      "description": "Current annual gross pay.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
@@ -8679,6 +9381,7 @@
        }
       ],
       "default": null,
+      "description": "Annual raise above inflation. Default: the scenario's `macro.salary_growth`.",
       "title": "Real Growth Rate"
      },
      "end": {
@@ -8704,6 +9407,7 @@
        }
       ],
       "default": null,
+      "description": "When the salary stops. Default: the owner's retirement (prorated by month in that year).",
       "title": "End"
      },
      "elections": {
@@ -8713,7 +9417,8 @@
        "employer_match": null,
        "hsa": null,
        "dependent_care_fsa": null
-      }
+      },
+      "description": "Deferrals, employer match, HSA, and dependent-care FSA."
      }
     },
     "required": [
@@ -8743,8 +9448,10 @@
    },
    "ScenarioDoc": {
     "additionalProperties": false,
+    "description": "One plan for the profile: horizon, market assumptions, decisions (levers), and what-if changes.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -8758,6 +9465,7 @@
        }
       ],
       "default": null,
+      "description": "What the scenario tests, shown in listings.",
       "title": "Description"
      },
      "rule_set": {
@@ -8770,7 +9478,7 @@
        }
       ],
       "default": "latest",
-      "description": "\"latest\" or a tax year",
+      "description": "The rules to use: `latest`, or a tax year such as 2026 to keep results fixed when new rules arrive.",
       "title": "Rule Set"
      },
      "horizon": {
@@ -8782,7 +9490,8 @@
        "preset": "forward_conservative",
        "overrides": {},
        "deterministic_returns": "geometric"
-      }
+      },
+      "description": "Market assumptions."
      },
      "macro": {
       "$ref": "#/components/schemas/Macro",
@@ -8818,10 +9527,12 @@
        },
        "contributions": [],
        "plan_529_leftover": "keep"
-      }
+      },
+      "description": "The decisions being tested."
      },
      "events": {
       "default": [],
+      "description": "What-if events, in addition to the profile's events.yaml.",
       "items": {
        "discriminator": {
         "mapping": {
@@ -8852,6 +9563,7 @@
        "type": "object"
       },
       "default": {},
+      "description": "Changes to profile documents for this scenario only, as dotted paths per document, e.g.\n{household: {\"members.alex.target_retirement_age\": 62}}. List items are addressed by id.",
       "propertyNames": {
        "enum": [
         "household",
@@ -8933,13 +9645,16 @@
     "description": "A standard deduction that shrinks as state income rises (e.g. Wisconsin).",
     "properties": {
      "maximum": {
-      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"
+      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____",
+      "description": "The deduction at low incomes."
      },
      "phase_out_start": {
-      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"
+      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____",
+      "description": "State income where the reduction begins."
      },
      "phase_out_rate": {
-      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0___Le_le_1_____"
+      "$ref": "#/components/schemas/ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0___Le_le_1_____",
+      "description": "Reduction per dollar of state income above the start."
      },
      "head_of_household_floor": {
       "anyOf": [
@@ -8952,6 +9667,7 @@
        }
       ],
       "default": null,
+      "description": "`single`: head of household never gets less than the single schedule (Wisconsin).",
       "title": "Head Of Household Floor"
      }
     },
@@ -8967,6 +9683,7 @@
     "additionalProperties": false,
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
@@ -9041,9 +9758,10 @@
    },
    "SocialSecurityRecord": {
     "additionalProperties": false,
-    "description": "A member's own Social Security record (PLAN.md D6).",
+    "description": "A member's own Social Security record.",
     "properties": {
      "pia_at_fra": {
+      "description": "Monthly benefit at full retirement age (the Primary Insurance Amount), in today's dollars, from the SSA\nstatement.",
       "minimum": 0,
       "title": "Pia At Fra",
       "type": "number"
@@ -9091,10 +9809,12 @@
     "additionalProperties": false,
     "properties": {
      "base": {
-      "$ref": "#/components/schemas/BaseSpending"
+      "$ref": "#/components/schemas/BaseSpending",
+      "description": "Ordinary annual spending."
      },
      "categories": {
       "default": [],
+      "description": "Spending on top of base: once, every few years, or for a stretch of years.",
       "items": {
        "$ref": "#/components/schemas/SpendingCategory"
       },
@@ -9113,6 +9833,7 @@
     "description": "Spending on top of base. Active from `start` to `end` (inclusive), every `every_years`, or `once`.",
     "properties": {
      "id": {
+      "description": "Shown in the results' spending breakdown and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -9127,15 +9848,18 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "amount": {
+      "description": "Today's dollars per year it occurs.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
      },
      "index": {
       "default": "general",
+      "description": "How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`.",
       "enum": [
        "general",
        "education",
@@ -9147,6 +9871,7 @@
      },
      "tags": {
       "default": [],
+      "description": "`qualified_education` (education credits, paid from 529s) and `dependent_care` (care credit, FSA).",
       "items": {
        "enum": [
         "qualified_education",
@@ -9168,6 +9893,7 @@
        }
       ],
       "default": null,
+      "description": "The dependent (or member) it's for. Required with `qualified_education`.",
       "title": "Beneficiary"
      },
      "start": {
@@ -9193,6 +9919,7 @@
        }
       ],
       "default": null,
+      "description": "The first year. Default: the start of the plan.",
       "title": "Start"
      },
      "end": {
@@ -9218,6 +9945,7 @@
        }
       ],
       "default": null,
+      "description": "The last year (inclusive). Default: the end of the plan.",
       "title": "End"
      },
      "every_years": {
@@ -9231,6 +9959,7 @@
        }
       ],
       "default": null,
+      "description": "Repeat every N years from `start`. Default: every year.",
       "title": "Every Years"
      },
      "once": {
@@ -9256,6 +9985,7 @@
        }
       ],
       "default": null,
+      "description": "A single year. Can't be combined with `start`, `end`, or `every_years`.",
       "title": "Once"
      }
     },
@@ -9268,13 +9998,16 @@
    },
    "SpendingDoc": {
     "additionalProperties": false,
+    "description": "What the household spends: a base amount plus categories.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "spending": {
-      "$ref": "#/components/schemas/Spending"
+      "$ref": "#/components/schemas/Spending",
+      "description": "Base spending and categories."
      }
     },
     "required": [
@@ -9289,11 +10022,13 @@
     "description": "Multipliers on base spending by the reference member's age (e.g. go-go / slow-go / no-go years).",
     "properties": {
      "reference": {
+      "description": "The member whose age selects the band.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Reference",
       "type": "string"
      },
      "bands": {
+      "description": "Bands in increasing age order; the last has no `until_age`.",
       "items": {
        "$ref": "#/components/schemas/PhaseBand"
       },
@@ -9377,32 +10112,38 @@
     "description": "A state care credit computed like the federal one (on federal AGI) with its own caps and rate table.",
     "properties": {
      "expense_cap_one": {
+      "description": "Expenses counted with one qualifying person.",
       "minimum": 0,
       "title": "Expense Cap One",
       "type": "number"
      },
      "expense_cap_two_or_more": {
+      "description": "Expenses counted with two or more.",
       "minimum": 0,
       "title": "Expense Cap Two Or More",
       "type": "number"
      },
      "max_rate": {
+      "description": "The credit rate at low incomes.",
       "maximum": 1,
       "minimum": 0,
       "title": "Max Rate",
       "type": "number"
      },
      "agi_threshold": {
+      "description": "Federal AGI where the rate starts falling.",
       "minimum": 0,
       "title": "Agi Threshold",
       "type": "number"
      },
      "step": {
+      "description": "The rate falls one point per `step` (or fraction) of AGI over the threshold.",
       "minimum": 0,
       "title": "Step",
       "type": "number"
      },
      "floor_rate": {
+      "description": "The lowest rate.",
       "maximum": 1,
       "minimum": 0,
       "title": "Floor Rate",
@@ -9422,18 +10163,22 @@
    },
    "StateRules": {
     "additionalProperties": false,
+    "description": "One state's rules.",
     "properties": {
      "name": {
+      "description": "The state's name.",
       "title": "Name",
       "type": "string"
      },
      "community_property": {
       "default": false,
+      "description": "A community (or marital) property state: both halves of joint property get a stepped-up basis at the first\ndeath.",
       "title": "Community Property",
       "type": "boolean"
      },
      "sources": {
       "default": [],
+      "description": "Where each figure comes from: forms, instructions, statutes, with links and the date checked.",
       "items": {
        "type": "string"
       },
@@ -9441,6 +10186,7 @@
       "type": "array"
      },
      "tax": {
+      "description": "The income tax: `kind` is `none`, `flat`, or `progressive`.",
       "discriminator": {
        "mapping": {
         "flat": "#/components/schemas/FlatStateTax",
@@ -9475,10 +10221,12 @@
     "description": "Income tax rules per state, keyed by code (e.g. \"WI\"). A household's `state` picks one; \"none\" is required.",
     "properties": {
      "schema_version": {
+      "description": "The document format's version. Currently 1 for every document.",
       "title": "Schema Version",
       "type": "integer"
      },
      "base_year": {
+      "description": "The tax year the amounts are for. Indexed amounts grow with inflation from here.",
       "title": "Base Year",
       "type": "integer"
      },
@@ -9486,6 +10234,7 @@
       "additionalProperties": {
        "$ref": "#/components/schemas/StateRules"
       },
+      "description": "Rules by state code: `none`, `WI`, ...",
       "title": "States",
       "type": "object"
      }
@@ -9500,6 +10249,7 @@
    },
    "StaticAllocation": {
     "additionalProperties": false,
+    "description": "A fixed mix, rebalanced every year. The weights must sum to 1.",
     "properties": {
      "kind": {
       "const": "static_allocation",
@@ -9507,12 +10257,14 @@
       "type": "string"
      },
      "stocks": {
+      "description": "Share in stocks, e.g. 0.70.",
       "maximum": 1,
       "minimum": 0,
       "title": "Stocks",
       "type": "number"
      },
      "bonds": {
+      "description": "Share in bonds.",
       "maximum": 1,
       "minimum": 0,
       "title": "Bonds",
@@ -9520,6 +10272,7 @@
      },
      "cash": {
       "default": 0.0,
+      "description": "Share in cash.",
       "maximum": 1,
       "minimum": 0,
       "title": "Cash",
@@ -9563,11 +10316,13 @@
     "properties": {
      "no_shortfall": {
       "default": true,
+      "description": "Fail a path in any year spending and taxes aren't fully paid.",
       "title": "No Shortfall",
       "type": "boolean"
      },
      "shortfall_tolerance": {
       "default": 1.0,
+      "description": "Ignore a yearly shortfall up to this many dollars (rounding).",
       "minimum": 0,
       "title": "Shortfall Tolerance",
       "type": "number"
@@ -9581,7 +10336,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Fail a path if cash plus brokerage falls below a floor at a year end."
      }
     },
     "title": "SuccessCriteria",
@@ -9638,6 +10394,7 @@
     "description": "Where year-end surplus cash goes, in priority order.",
     "properties": {
      "account": {
+      "description": "A brokerage or cash account.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Account",
       "type": "string"
@@ -9653,6 +10410,7 @@
        }
       ],
       "default": null,
+      "description": "Fill only up to this balance (today's dollars), then move to the next target. Default: no cap.",
       "title": "Up To Balance"
      }
     },
@@ -9672,6 +10430,7 @@
       "type": "string"
      },
      "target_year": {
+      "description": "Usually the owner's retirement year, or a 529 beneficiary's first college year.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Target Year",
@@ -9679,6 +10438,7 @@
      },
      "glide_path": {
       "default": "linear_default",
+      "description": "A glide path id from rules/glide_paths.yaml.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Glide Path",
       "type": "string"
@@ -9695,6 +10455,7 @@
        }
       ],
       "default": null,
+      "description": "Override: the stock share until `years_before` the target year.",
       "title": "Start Equity"
      },
      "years_before": {
@@ -9708,6 +10469,7 @@
        }
       ],
       "default": null,
+      "description": "Override: how many years before the target year the stock share starts falling.",
       "title": "Years Before"
      },
      "target_equity": {
@@ -9722,6 +10484,7 @@
        }
       ],
       "default": null,
+      "description": "Override: the stock share at the target year.",
       "title": "Target Equity"
      },
      "post_target": {
@@ -9733,7 +10496,8 @@
         "type": "null"
        }
       ],
-      "default": null
+      "default": null,
+      "description": "Override: keep reducing the stock share after the target year."
      }
     },
     "required": [
@@ -9802,8 +10566,10 @@
    },
    "WindfallEvent": {
     "additionalProperties": false,
+    "description": "A one-time receipt: a bonus, a gift, a business sale.",
     "properties": {
      "id": {
+      "description": "Shown in results and the ledger.",
       "pattern": "^[a-z][a-z0-9_]*$",
       "title": "Id",
       "type": "string"
@@ -9823,9 +10589,11 @@
        }
       ],
       "default": null,
+      "description": "A note for yourself.",
       "title": "Description"
      },
      "when": {
+      "description": "The year it arrives.",
       "oneOf": [
        {
         "$ref": "#/components/schemas/YearAnchor"
@@ -9843,12 +10611,14 @@
       "title": "When"
      },
      "amount": {
+      "description": "The amount received.",
       "minimum": 0,
       "title": "Amount",
       "type": "number"
      },
      "dollars": {
       "default": "today",
+      "description": "`today`: grown with inflation to the event year; `nominal`: that year's dollars.",
       "enum": [
        "today",
        "nominal"
@@ -9858,6 +10628,7 @@
      },
      "tax_character": {
       "default": "tax_free",
+      "description": "How it's taxed.",
       "enum": [
        "tax_free",
        "ordinary",
@@ -9877,6 +10648,7 @@
        }
       ],
       "default": null,
+      "description": "Whose income it is, for an ordinary windfall. Default: joint.",
       "title": "Owner"
      },
      "deposit_to": {
@@ -9890,6 +10662,7 @@
        }
       ],
       "default": null,
+      "description": "An account to deposit it in. Default: cash, which then pays the year's bills or is swept.",
       "title": "Deposit To"
      }
     },
@@ -9915,8 +10688,10 @@
    },
    "YearAnchor": {
     "additionalProperties": false,
+    "description": "A calendar year.",
     "properties": {
      "year": {
+      "description": "The calendar year.",
       "maximum": 2200,
       "minimum": 1900,
       "title": "Year",

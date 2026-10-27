@@ -1,6 +1,6 @@
 """Healthcare costs each year: employer coverage while anyone works, the unsubsidized individual market before
 Medicare, Medicare Part B/D plus IRMAA (from MAGI two years earlier) and a supplement, out-of-pocket costs, and HSA
-payment of qualified expenses. ACA premium subsidies aren't modeled (PLAN.md Q6)."""
+payment of qualified expenses. ACA premium subsidies aren't modeled (docs/modeling.md)."""
 
 from __future__ import annotations
 

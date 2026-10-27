@@ -20,7 +20,7 @@ format:
 	$(PYTHON) -m ruff check --fix .
 	$(PYTHON) -m ruff format .
 
-# Phase 6 performance budget: 10,000 Monte Carlo paths of ~50 years in under 60 s.
+# Performance budget: 10,000 Monte Carlo paths of ~50 years in under 60 s.
 # Reads the files, so the run isn't recorded or answered from the database's run cache.
 bench:
 	$(VENV)/bin/northward --data-dir data mc --profile example --scenario base --sims 10000 --out var/runs/bench
@@ -43,7 +43,7 @@ api-types:
 	$(VENV)/bin/northward openapi frontend/openapi.json
 	cd frontend && npm run gen:api
 
-# The web UI (Phase 9A): build it into frontend/dist, which `northward serve` then serves.
+# The web UI: build it into frontend/dist, which `northward serve` then serves.
 ui:
 	cd frontend && npm ci && npm run build
 

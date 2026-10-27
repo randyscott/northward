@@ -62,15 +62,20 @@ def also_accepts(*alternatives: dict[str, Any]) -> Any:
 
 
 class StrictModel(BaseModel):
-    """Base for every config model: unknown keys are errors and instances are immutable."""
+    """Base for every config model: unknown keys are errors and instances are immutable.
 
-    model_config = ConfigDict(extra="forbid", frozen=True)
+    A docstring under a field becomes its description in the JSON Schema, which the editor shows on hover (and
+    tests/config/test_schema_docs.py requires for profile and scenario documents).
+    """
+
+    model_config = ConfigDict(extra="forbid", frozen=True, use_attribute_docstrings=True)
 
 
 class Document(StrictModel):
     """Base for a top-level YAML document. `schema_version` drives upgrades (see `versioning`)."""
 
     schema_version: int
+    """The document format's version. Currently 1 for every document."""
 
 
 class FilingStatus(str, Enum):
@@ -90,10 +95,15 @@ class ByFilingStatus(StrictModel, Generic[T]):
     """
 
     married_filing_jointly: T
+    """The value for married filing jointly."""
     single: T
+    """The value for single filers."""
     married_filing_separately: T
+    """The value for married filing separately."""
     head_of_household: T
+    """The value for head of household."""
     qualifying_surviving_spouse: T | None = None
+    """The value for a qualifying surviving spouse. Default: the married-filing-jointly value."""
 
     def for_status(self, status: FilingStatus) -> T:
         if status is FilingStatus.QUALIFYING_SURVIVING_SPOUSE:

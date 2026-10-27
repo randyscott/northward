@@ -1,4 +1,4 @@
-"""Social Security benefits (PLAN.md D6): own, spousal, child, child-in-care, and survivor benefits.
+"""Social Security benefits (docs/decisions.md D6): own, spousal, child, child-in-care, and survivor benefits.
 
 Benefits are worked out month by month (claim dates, deaths, children aging out, survivors reaching 60) in
 start-year dollars from each member's PIA, then inflated by CPI (the COLA) for the year.

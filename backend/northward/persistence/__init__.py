@@ -1,1 +1,1 @@
-"""Database models, repositories, and seed/export (Phase 7)."""
+"""Database models, repositories, and seed/export."""

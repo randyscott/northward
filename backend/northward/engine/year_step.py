@@ -1,4 +1,4 @@
-"""One simulated year: the eight lifecycle stages from README §4, in order."""
+"""One simulated year: the eight stages in order (docs/architecture.md)."""
 
 from __future__ import annotations
 

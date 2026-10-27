@@ -1,4 +1,4 @@
-"""Spending for a year: base amount (phases, retirement change) plus the categories that occur (PLAN.md §4.1)."""
+"""Spending for a year: base amount (phases, retirement change) plus the categories that occur (docs/configuration/spending.md)."""
 
 from __future__ import annotations
 

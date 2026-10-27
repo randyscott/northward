@@ -1,4 +1,4 @@
-# What counts as a successful Monte Carlo path, and how legacy is valued (PLAN.md D35, D36). Optional; every scenario
+# What counts as a successful Monte Carlo path, and how legacy is valued (docs/decisions.md D35, D36). Optional; every scenario
 # of the profile uses it. CLI flags (--liquidity-floor, --allow-shortfall, ...) override it when computing statistics.
 schema_version: 1
 

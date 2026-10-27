@@ -1,4 +1,4 @@
-"""529 withdrawals for qualified education (PLAN.md §4.5) and what happens to money left over afterward."""
+"""529 withdrawals for qualified education (docs/configuration/accounts.md) and what happens to money left over afterward."""
 
 from __future__ import annotations
 

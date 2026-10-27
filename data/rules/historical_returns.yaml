@@ -1,4 +1,4 @@
-# Annual US returns and inflation, 1928-2025, for the historical block-bootstrap sampler (PLAN.md D38).
+# Annual US returns and inflation, 1928-2025, for the historical block-bootstrap sampler (docs/decisions.md D38).
 # Each year: nominal total returns of large-cap stocks, the 10-year Treasury, and 3-month T-bills, and CPI-U inflation
 # (December to December). The historical_us preset in market_assumptions.yaml is computed from these values.
 schema_version: 1

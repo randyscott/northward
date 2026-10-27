@@ -1,1 +1,1 @@
-"""Account behaviors, Portfolio, and glide paths (Phase 2)."""
+"""Account behaviors, Portfolio, and glide paths."""

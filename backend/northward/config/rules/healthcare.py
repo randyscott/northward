@@ -88,13 +88,23 @@ class HealthcareDoc(Document):
 
 
 class HealthcareProfileDoc(Document):
-    """A profile's overrides of the rules' default healthcare assumptions (every field optional)."""
+    """The household's healthcare cost assumptions, replacing the defaults in rules/healthcare.yaml. Every field is
+    optional; amounts are annual, in today's dollars, and grow with healthcare inflation."""
 
     employer_premium: Money | None = None
+    """The household's share of employer coverage while anyone works, paid pre-tax."""
     individual_premium_age_40: Money | None = None
+    """Unsubsidized individual-market premium per person at age 40, before 65 with no employer coverage. Other ages
+    follow the ACA age curve."""
     part_d_premium: Money | None = None
+    """Medicare Part D plan premium per person, before any IRMAA surcharge."""
     supplement_premium: Money | None = None
+    """Medigap (or similar) premium per person from 65."""
     out_of_pocket_under_65: Money | None = None
+    """Deductibles, copays, and uncovered care per person before 65."""
     out_of_pocket_65_plus: Money | None = None
+    """Out-of-pocket costs per person from 65."""
     dependent_coverage_until_age: int | None = None
+    """Dependents are covered (and cost premiums) through the year before this age."""
     hsa_medical: Literal["pay_when_retired", "pay_always", "never"] | None = None
+    """When HSAs pay qualified medical costs tax-free: once the owner retires, always, or never."""

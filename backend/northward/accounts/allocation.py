@@ -18,7 +18,7 @@ class Allocation(NamedTuple):
 
 
 def glide_path_equity(glide_path: GlidePath, strategy: TargetDateStrategy, year: int) -> float:
-    """Equity share for `year` (PLAN.md §4.2), with the account's inline overrides applied."""
+    """Equity share for `year` (docs/configuration/rules.md), with the account's inline overrides applied."""
     start = strategy.start_equity if strategy.start_equity is not None else glide_path.start_equity
     years_before = strategy.years_before if strategy.years_before is not None else glide_path.years_before
     target = strategy.target_equity if strategy.target_equity is not None else glide_path.target_equity
