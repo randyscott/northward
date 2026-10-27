@@ -1226,25 +1226,30 @@ export interface components {
         };
         /** AccountTypesDoc */
         AccountTypesDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /** Account Types */
             account_types: components["schemas"]["AccountType"][];
         };
         /**
          * AccountsDoc
-         * @description Raw account entries; `parse_accounts` validates each against the model its account type's family selects.
+         * @description Every account the household owns: owner, type, balance, and how it's invested.
          */
         AccountsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /**
              * Accounts
+             * @description The fields an account needs depend on its `type`.
              * @default []
              */
-            accounts?: {
-                [key: string]: unknown;
-            }[];
+            accounts?: (components["schemas"]["RetirementAccount"] | components["schemas"]["HsaAccount"] | components["schemas"]["InheritedAccount"] | components["schemas"]["BrokerageAccount"] | components["schemas"]["CashAccount"] | components["schemas"]["Plan529Account"])[];
         };
         /**
          * AdditionalStandardDeduction
@@ -1276,7 +1281,10 @@ export interface components {
          * @description Fixed-payment loan (mortgage, auto). Give either `monthly_payment` or `remaining_term_months`.
          */
         AmortizingLoan: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results; events can pay the loan off by this id.
+             */
             id: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -1285,55 +1293,78 @@ export interface components {
             kind: "amortizing";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** Balance */
+            /**
+             * Balance
+             * @description The balance owed now.
+             */
             balance: number;
-            /** Annual Rate */
+            /**
+             * Annual Rate
+             * @description The interest rate, e.g. 0.0425.
+             */
             annual_rate: number;
             /**
              * Monthly Payment
+             * @description The scheduled principal and interest payment (not escrow). Give this or `remaining_term_months`.
              * @default null
              */
             monthly_payment?: number | null;
             /**
              * Remaining Term Months
+             * @description Months left on the loan; the payment is computed from it. Give this or `monthly_payment`.
              * @default null
              */
             remaining_term_months?: number | null;
             /**
              * Extra Monthly Payment
+             * @description Extra principal paid each month.
              * @default 0
              */
             extra_monthly_payment?: number;
         };
-        /** BaseSpending */
+        /**
+         * BaseSpending
+         * @description Ordinary living costs, excluding taxes, healthcare, and loan payments (which are modeled separately).
+         */
         BaseSpending: {
-            /** Amount */
+            /**
+             * Amount
+             * @description Annual spending in today's dollars.
+             */
             amount: number;
             /**
              * Index
+             * @description How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`.
              * @default general
              * @enum {string}
              */
             index?: "general" | "education" | "healthcare" | "none";
             /**
              * Retirement Change
+             * @description Fractional change from the first full year all members are retired, e.g. -0.10.
              * @default 0
              */
             retirement_change?: number;
             /**
              * Includes Healthcare
+             * @description True if `amount` already covers healthcare, which turns off the healthcare cost model.
              * @default false
              */
             includes_healthcare?: boolean;
             /**
              * Survivor Multiplier
+             * @description After the first death in a two-member household, base spending is multiplied by this.
              * @default 0.75
              */
             survivor_multiplier?: number;
-            /** @default null */
+            /**
+             * @description Multipliers by a member's age, e.g. spending less in later decades.
+             * @default null
+             */
             phases?: components["schemas"]["SpendingPhases"] | null;
         };
         /** BondIncome */
@@ -1350,62 +1381,137 @@ export interface components {
             indexed?: boolean;
             schedules: components["schemas"]["ByFilingStatus_Annotated_tuple_tuple_float__float____________AfterValidator__"];
         };
+        /**
+         * BrokerageAccount
+         * @description A taxable brokerage account.
+         */
+        BrokerageAccount: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Asset Strategy
+             * @description How the account is invested: a static_allocation or a target_date glide path.
+             */
+            asset_strategy: components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"];
+            /**
+             * Cost Basis
+             * @description Total cost basis of the holdings (average-cost basis is used).
+             */
+            cost_basis: number;
+        };
         /** ByFilingStatus[Annotated[float, FieldInfo(annotation=NoneType, required=True, metadata=[Ge(ge=0), Le(le=1)])]] */
         ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0___Le_le_1_____: {
-            /** Married Filing Jointly */
+            /**
+             * Married Filing Jointly
+             * @description The value for married filing jointly.
+             */
             married_filing_jointly: number;
-            /** Single */
+            /**
+             * Single
+             * @description The value for single filers.
+             */
             single: number;
-            /** Married Filing Separately */
+            /**
+             * Married Filing Separately
+             * @description The value for married filing separately.
+             */
             married_filing_separately: number;
-            /** Head Of Household */
+            /**
+             * Head Of Household
+             * @description The value for head of household.
+             */
             head_of_household: number;
             /**
              * Qualifying Surviving Spouse
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
              * @default null
              */
             qualifying_surviving_spouse?: number | null;
         };
         /** ByFilingStatus[Annotated[float, FieldInfo(annotation=NoneType, required=True, metadata=[Ge(ge=0)])]] */
         ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____: {
-            /** Married Filing Jointly */
+            /**
+             * Married Filing Jointly
+             * @description The value for married filing jointly.
+             */
             married_filing_jointly: number;
-            /** Single */
+            /**
+             * Single
+             * @description The value for single filers.
+             */
             single: number;
-            /** Married Filing Separately */
+            /**
+             * Married Filing Separately
+             * @description The value for married filing separately.
+             */
             married_filing_separately: number;
-            /** Head Of Household */
+            /**
+             * Head Of Household
+             * @description The value for head of household.
+             */
             head_of_household: number;
             /**
              * Qualifying Surviving Spouse
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
              * @default null
              */
             qualifying_surviving_spouse?: number | null;
         };
         /** ByFilingStatus[Annotated[tuple[tuple[float, float], ...], AfterValidator]] */
         ByFilingStatus_Annotated_tuple_tuple_float__float____________AfterValidator__: {
-            /** Married Filing Jointly */
+            /**
+             * Married Filing Jointly
+             * @description The value for married filing jointly.
+             */
             married_filing_jointly: [
                 number,
                 number
             ][];
-            /** Single */
+            /**
+             * Single
+             * @description The value for single filers.
+             */
             single: [
                 number,
                 number
             ][];
-            /** Married Filing Separately */
+            /**
+             * Married Filing Separately
+             * @description The value for married filing separately.
+             */
             married_filing_separately: [
                 number,
                 number
             ][];
-            /** Head Of Household */
+            /**
+             * Head Of Household
+             * @description The value for head of household.
+             */
             head_of_household: [
                 number,
                 number
             ][];
             /**
              * Qualifying Surviving Spouse
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
              * @default null
              */
             qualifying_surviving_spouse?: [
@@ -1415,45 +1521,79 @@ export interface components {
         };
         /** ByFilingStatus[PhaseOutRange] */
         ByFilingStatus_PhaseOutRange_: {
+            /** @description The value for married filing jointly. */
             married_filing_jointly: components["schemas"]["PhaseOutRange"];
+            /** @description The value for single filers. */
             single: components["schemas"]["PhaseOutRange"];
+            /** @description The value for married filing separately. */
             married_filing_separately: components["schemas"]["PhaseOutRange"];
+            /** @description The value for head of household. */
             head_of_household: components["schemas"]["PhaseOutRange"];
-            /** @default null */
+            /**
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
+             * @default null
+             */
             qualifying_surviving_spouse?: components["schemas"]["PhaseOutRange"] | null;
         };
         /** ByFilingStatus[SsTaxThresholds] */
         ByFilingStatus_SsTaxThresholds_: {
+            /** @description The value for married filing jointly. */
             married_filing_jointly: components["schemas"]["SsTaxThresholds"];
+            /** @description The value for single filers. */
             single: components["schemas"]["SsTaxThresholds"];
+            /** @description The value for married filing separately. */
             married_filing_separately: components["schemas"]["SsTaxThresholds"];
+            /** @description The value for head of household. */
             head_of_household: components["schemas"]["SsTaxThresholds"];
-            /** @default null */
+            /**
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
+             * @default null
+             */
             qualifying_surviving_spouse?: components["schemas"]["SsTaxThresholds"] | null;
         };
         /** ByFilingStatus[Union[Annotated[float, FieldInfo(annotation=NoneType, required=True, metadata=[Ge(ge=0)])], NoneType]] */
         ByFilingStatus_Union_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0______NoneType__: {
-            /** Married Filing Jointly */
+            /**
+             * Married Filing Jointly
+             * @description The value for married filing jointly.
+             */
             married_filing_jointly: number | null;
-            /** Single */
+            /**
+             * Single
+             * @description The value for single filers.
+             */
             single: number | null;
-            /** Married Filing Separately */
+            /**
+             * Married Filing Separately
+             * @description The value for married filing separately.
+             */
             married_filing_separately: number | null;
-            /** Head Of Household */
+            /**
+             * Head Of Household
+             * @description The value for head of household.
+             */
             head_of_household: number | null;
             /**
              * Qualifying Surviving Spouse
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
              * @default null
              */
             qualifying_surviving_spouse?: number | null;
         };
         /** ByFilingStatus[Union[PhaseOutRange, NoneType]] */
         ByFilingStatus_Union_PhaseOutRange__NoneType__: {
+            /** @description The value for married filing jointly. */
             married_filing_jointly: components["schemas"]["PhaseOutRange"] | null;
+            /** @description The value for single filers. */
             single: components["schemas"]["PhaseOutRange"] | null;
+            /** @description The value for married filing separately. */
             married_filing_separately: components["schemas"]["PhaseOutRange"] | null;
+            /** @description The value for head of household. */
             head_of_household: components["schemas"]["PhaseOutRange"] | null;
-            /** @default null */
+            /**
+             * @description The value for a qualifying surviving spouse. Default: the married-filing-jointly value.
+             * @default null
+             */
             qualifying_surviving_spouse?: components["schemas"]["PhaseOutRange"] | null;
         };
         /**
@@ -1477,15 +1617,53 @@ export interface components {
             floor_rate: number;
         };
         /**
+         * CashAccount
+         * @description A checking or savings account.
+         */
+        CashAccount: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Interest Rate
+             * @description A fixed annual rate. Default: the market preset's cash return.
+             * @default null
+             */
+            interest_rate?: number | null;
+        };
+        /**
          * CashReserve
          * @description An emergency fund kept at `amount` (today's dollars) in `account`. Withdrawals leave it in place until every
          *     other account in the withdrawal order is used up. Each year, once spending is covered, it's topped back up to its
          *     inflation-adjusted level: from the year's cash first, then from the other accounts in the withdrawal order.
          */
         CashReserve: {
-            /** Account */
+            /**
+             * Account
+             * @description A cash or brokerage account.
+             */
             account: string;
-            /** Amount */
+            /**
+             * Amount
+             * @description The reserve in today's dollars, grown with inflation.
+             */
             amount: number;
         };
         /** ChildDependentCareCredit */
@@ -1561,10 +1739,14 @@ export interface components {
          * @description Social Security claiming age. YAML accepts a whole number (67) or {years, months}.
          */
         ClaimAge: {
-            /** Years */
+            /**
+             * Years
+             * @description Whole years of age, 62-70.
+             */
             years: number;
             /**
              * Months
+             * @description Extra months, 0-11.
              * @default 0
              */
             months?: number;
@@ -1574,22 +1756,31 @@ export interface components {
          * @description A recurring non-payroll contribution (IRA, 529, brokerage). Payroll contributions are salary elections.
          */
         Contribution: {
-            /** Account */
+            /**
+             * Account
+             * @description The account contributed to.
+             */
             account: string;
-            /** Amount */
+            /**
+             * Amount
+             * @description Per year, in today's dollars.
+             */
             amount: number;
             /**
              * Start
+             * @description The first year. Default: the start of the plan.
              * @default null
              */
             start?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * End
+             * @description The last year (inclusive). Default: the end of the plan.
              * @default null
              */
             end?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * Index
+             * @description `general` grows with inflation; `none` stays at a fixed nominal amount.
              * @default general
              * @enum {string}
              */
@@ -1597,7 +1788,10 @@ export interface components {
         };
         /** ContributionLimitsDoc */
         ContributionLimitsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             elective_deferral: components["schemas"]["ElectiveDeferral"];
@@ -1613,9 +1807,15 @@ export interface components {
         };
         /** ConversionPair */
         ConversionPair: {
-            /** Source */
+            /**
+             * Source
+             * @description A traditional (tax-deferred) retirement account.
+             */
             source: string;
-            /** Target */
+            /**
+             * Target
+             * @description A Roth account of the same owner.
+             */
             target: string;
         };
         /** Credits */
@@ -1627,30 +1827,46 @@ export interface components {
         };
         /**
          * Dependent
-         * @description A child or other relative the household supports and may claim for tax purposes (PLAN.md §4.4).
+         * @description A child or other relative the household supports and may claim for tax purposes.
          */
         Dependent: {
-            /** Id */
+            /**
+             * Id
+             * @description How other documents refer to this person. Members and dependents share one set of ids.
+             */
             id: string;
-            /** Name */
+            /**
+             * Name
+             * @description Display name.
+             */
             name: string;
-            /** Birth Year */
+            /**
+             * Birth Year
+             * @description Year of birth.
+             */
             birth_year: number;
-            /** Birth Month */
+            /**
+             * Birth Month
+             * @description 1-12.
+             */
             birth_month: number;
             /**
              * Relationship
+             * @description An other relative is a dependent while living with the household, and never gets the Child Tax Credit.
              * @default child
              * @enum {string}
              */
             relationship?: "child" | "other_relative";
             /**
              * Lives With Household Until Age
+             * @description The last age at which they live with the household. Without it, the dependency age rules decide.
              * @default null
              */
             lives_with_household_until_age?: number | null;
             /**
              * Full Time Student Ages
+             * @description [first, last] ages as a full-time student (inclusive). Extends dependency to under 24 and decides the
+             *     education credit.
              * @default null
              */
             full_time_student_ages?: [
@@ -1659,20 +1875,31 @@ export interface components {
             ] | null;
             /**
              * Disabled
+             * @description Removes the age limits on dependency, the care credit, and Social Security child benefits.
              * @default false
              */
             disabled?: boolean;
             /**
              * Child Of
+             * @description Members whose Social Security records can pay child benefits. Default: every member (for a child).
              * @default null
              */
             child_of?: string[] | null;
         };
-        /** DependentAgeAnchor */
+        /**
+         * DependentAgeAnchor
+         * @description The year a dependent reaches an age.
+         */
         DependentAgeAnchor: {
-            /** Dependent */
+            /**
+             * Dependent
+             * @description A dependent id from household.yaml.
+             */
             dependent: string;
-            /** Age */
+            /**
+             * Age
+             * @description May be fractional, counted in months from the birth month.
+             */
             age: number;
         };
         /**
@@ -1689,12 +1916,20 @@ export interface components {
             /** Care Under Age */
             care_under_age: number;
         };
-        /** DependentCareFsaElection */
+        /**
+         * DependentCareFsaElection
+         * @description Pre-tax dependent-care savings, reimbursing spending tagged dependent_care in the same year.
+         */
         DependentCareFsaElection: {
-            /** Annual */
+            /**
+             * Annual
+             * @description Amount set aside per year, in today's dollars. Any excess over that year's dependent_care spending is
+             *     forfeited.
+             */
             annual: number;
             /**
              * Until
+             * @description An explicit end. The election also stops at the member's retirement or when no dependent is care-eligible.
              * @default null
              */
             until?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
@@ -1769,29 +2004,52 @@ export interface components {
             /** Roth Catch Up Required From */
             roth_catch_up_required_from: number;
         };
-        /** EmployerMatch */
+        /**
+         * EmployerMatch
+         * @description The employer's matching contribution, always deposited pre-tax.
+         */
         EmployerMatch: {
-            /** Account */
+            /**
+             * Account
+             * @description The account that receives the match (typically the traditional 401(k)).
+             */
             account: string;
-            /** Tiers */
+            /**
+             * Tiers
+             * @description Match tiers with increasing `up_to`, e.g. 100% of the first 3% of pay, then 50% of the next 2%.
+             */
             tiers: components["schemas"]["MatchTier"][];
         };
-        /** EventAnchor */
+        /**
+         * EventAnchor
+         * @description The year of a member's retirement or death.
+         */
         EventAnchor: {
             /**
              * Event
+             * @description A death that doesn't happen within the plan never occurs.
              * @enum {string}
              */
             event: "retirement" | "death";
-            /** Member */
+            /**
+             * Member
+             * @description A member id from household.yaml.
+             */
             member: string;
         };
-        /** EventsDoc */
+        /**
+         * EventsDoc
+         * @description Expected one-time events: windfalls, home sales, and inheritances.
+         */
         EventsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /**
              * Events
+             * @description Each event's `kind` is `windfall`, `home_sale`, or `inheritance`.
              * @default []
              */
             events?: (components["schemas"]["WindfallEvent"] | components["schemas"]["HomeSaleEvent"] | components["schemas"]["InheritanceEvent"])[];
@@ -1847,7 +2105,10 @@ export interface components {
         };
         /** FederalTaxDoc */
         FederalTaxDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             standard_deduction: components["schemas"]["StandardDeduction"];
@@ -1890,20 +2151,32 @@ export interface components {
          * @enum {string}
          */
         FilingStatus: "married_filing_jointly" | "single" | "married_filing_separately" | "head_of_household" | "qualifying_surviving_spouse";
-        /** FillBracketConversions */
+        /**
+         * FillBracketConversions
+         * @description Convert enough each year to fill an income tax bracket, after the year's other income.
+         */
         FillBracketConversions: {
-            /** Start Year */
+            /**
+             * Start Year
+             * @description The first year to convert.
+             */
             start_year: number;
-            /** End Year */
+            /**
+             * End Year
+             * @description The last year to convert (inclusive).
+             */
             end_year: number;
             /**
              * Pay Tax From
+             * @description Pay the tax from taxable accounts, or withhold it from the conversion (penalized before 59 1/2).
              * @default taxable
              * @enum {string}
              */
             pay_tax_from?: "taxable" | "conversion";
             /**
              * Pairs
+             * @description Which accounts convert into which, in order. Default: each traditional IRA, then other traditional account,
+             *     into the same owner's Roth IRA (or Roth 401(k)).
              * @default []
              */
             pairs?: components["schemas"]["ConversionPair"][];
@@ -1912,28 +2185,44 @@ export interface components {
              * @enum {string}
              */
             kind: "fill_bracket";
-            /** Bracket Rate */
+            /**
+             * Bracket Rate
+             * @description Convert up to the top of this ordinary bracket, e.g. 0.22.
+             */
             bracket_rate: number;
             /**
              * Respect Phase Outs
+             * @description Stop short of income levels where a credit or deduction the household gets starts to phase out (D28).
              * @default false
              */
             respect_phase_outs?: boolean;
         };
-        /** FixedAmountConversions */
+        /**
+         * FixedAmountConversions
+         * @description Convert the same amount each year.
+         */
         FixedAmountConversions: {
-            /** Start Year */
+            /**
+             * Start Year
+             * @description The first year to convert.
+             */
             start_year: number;
-            /** End Year */
+            /**
+             * End Year
+             * @description The last year to convert (inclusive).
+             */
             end_year: number;
             /**
              * Pay Tax From
+             * @description Pay the tax from taxable accounts, or withhold it from the conversion (penalized before 59 1/2).
              * @default taxable
              * @enum {string}
              */
             pay_tax_from?: "taxable" | "conversion";
             /**
              * Pairs
+             * @description Which accounts convert into which, in order. Default: each traditional IRA, then other traditional account,
+             *     into the same owner's Roth IRA (or Roth 401(k)).
              * @default []
              */
             pairs?: components["schemas"]["ConversionPair"][];
@@ -1942,7 +2231,10 @@ export interface components {
              * @enum {string}
              */
             kind: "fixed_amount";
-            /** Amount */
+            /**
+             * Amount
+             * @description Per year, in today's dollars.
+             */
             amount: number;
         };
         /**
@@ -1955,66 +2247,100 @@ export interface components {
              * @enum {string}
              */
             kind: "fixed";
-            /** Death Ages */
+            /**
+             * Death Ages
+             * @description Age at death by member id, e.g. {alex: 88}. May be fractional.
+             */
             death_ages: {
                 [key: string]: number;
             };
         };
-        /** FlatStateTax */
+        /**
+         * FlatStateTax
+         * @description One rate on all taxable income.
+         */
         FlatStateTax: {
             /**
              * Indexed
+             * @description Whether brackets and standard deductions grow with inflation from the rules' base year.
              * @default true
              */
             indexed?: boolean;
             /**
              * Exempt Social Security
+             * @description Subtract the federally taxable part of Social Security benefits.
              * @default true
              */
             exempt_social_security?: boolean;
             /**
              * Capital Gains Exclusion
+             * @description Share of net long-term capital gains excluded.
              * @default 0
              */
             capital_gains_exclusion?: number;
             /**
              * Capital Loss Limit
+             * @description Net capital losses deductible per year, if lower than federal. Default: the federal limit.
              * @default null
              */
             capital_loss_limit?: number | null;
             /**
              * Retirement Income Exclusions
+             * @description Subtractions of pension and retirement-account income, applied in order.
              * @default []
              */
             retirement_income_exclusions?: components["schemas"]["RetirementIncomeExclusion"][];
             /**
              * Subtract Health Premiums
+             * @description Subtract health insurance premiums paid with after-tax money (including Medicare and Medigap).
              * @default false
              */
             subtract_health_premiums?: boolean;
             /**
              * Additional Tax Share
+             * @description State tax as a share of the federal early-withdrawal and HSA additional taxes.
              * @default 0
              */
             additional_tax_share?: number;
-            /** @default null */
+            /**
+             * @description A subtraction for 529 contributions.
+             * @default null
+             */
             plan_529_deduction?: components["schemas"]["Plan529Deduction"] | null;
-            /** @default null */
+            /**
+             * @description A fixed standard deduction. Give this or `sliding_standard_deduction`, or neither.
+             * @default null
+             */
             standard_deduction?: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"] | null;
-            /** @default null */
+            /**
+             * @description A standard deduction that shrinks as income rises.
+             * @default null
+             */
             sliding_standard_deduction?: components["schemas"]["SlidingStandardDeduction"] | null;
-            /** @default null */
+            /**
+             * @description Amounts subtracted per person.
+             * @default null
+             */
             personal_exemptions?: components["schemas"]["PersonalExemptions"] | null;
-            /** @default null */
+            /**
+             * @description A credit for two-earner couples filing jointly.
+             * @default null
+             */
             married_couple_credit?: components["schemas"]["MarriedCoupleCredit"] | null;
-            /** @default null */
+            /**
+             * @description A state child and dependent care credit.
+             * @default null
+             */
             dependent_care_credit?: components["schemas"]["StateDependentCareCredit"] | null;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             kind: "flat";
-            /** Rate */
+            /**
+             * Rate
+             * @description The tax rate, e.g. 0.0495.
+             */
             rate: number;
         };
         /**
@@ -2079,16 +2405,27 @@ export interface components {
         };
         /** GlidePathsDoc */
         GlidePathsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /** Glide Paths */
             glide_paths: components["schemas"]["GlidePath"][];
         };
-        /** GoalsDoc */
+        /**
+         * GoalsDoc
+         * @description What counts as success in Monte Carlo, and how legacy is valued. Every scenario of the profile uses it.
+         */
         GoalsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
+            /** @description The success criteria. */
             success?: components["schemas"]["SuccessCriteria"];
+            /** @description How legacy is valued after tax. */
             legacy?: components["schemas"]["Legacy"];
         };
         /**
@@ -2122,7 +2459,10 @@ export interface components {
         };
         /** HealthcareDoc */
         HealthcareDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             medicare: components["schemas"]["Medicare"];
@@ -2135,55 +2475,71 @@ export interface components {
         };
         /**
          * HealthcareProfileDoc
-         * @description A profile's overrides of the rules' default healthcare assumptions (every field optional).
+         * @description The household's healthcare cost assumptions, replacing the defaults in rules/healthcare.yaml. Every field is
+         *     optional; amounts are annual, in today's dollars, and grow with healthcare inflation.
          */
         HealthcareProfileDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /**
              * Employer Premium
+             * @description The household's share of employer coverage while anyone works, paid pre-tax.
              * @default null
              */
             employer_premium?: number | null;
             /**
              * Individual Premium Age 40
+             * @description Unsubsidized individual-market premium per person at age 40, before 65 with no employer coverage. Other ages
+             *     follow the ACA age curve.
              * @default null
              */
             individual_premium_age_40?: number | null;
             /**
              * Part D Premium
+             * @description Medicare Part D plan premium per person, before any IRMAA surcharge.
              * @default null
              */
             part_d_premium?: number | null;
             /**
              * Supplement Premium
+             * @description Medigap (or similar) premium per person from 65.
              * @default null
              */
             supplement_premium?: number | null;
             /**
              * Out Of Pocket Under 65
+             * @description Deductibles, copays, and uncovered care per person before 65.
              * @default null
              */
             out_of_pocket_under_65?: number | null;
             /**
              * Out Of Pocket 65 Plus
+             * @description Out-of-pocket costs per person from 65.
              * @default null
              */
             out_of_pocket_65_plus?: number | null;
             /**
              * Dependent Coverage Until Age
+             * @description Dependents are covered (and cost premiums) through the year before this age.
              * @default null
              */
             dependent_coverage_until_age?: number | null;
             /**
              * Hsa Medical
+             * @description When HSAs pay qualified medical costs tax-free: once the owner retires, always, or never.
              * @default null
              */
             hsa_medical?: ("pay_when_retired" | "pay_always" | "never") | null;
         };
         /** HistoricalReturnsDoc */
         HistoricalReturnsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             /** Returns */
@@ -2210,7 +2566,10 @@ export interface components {
          * @description Sale of a home: gain above the §121 exclusion is a long-term gain; an attached mortgage is paid off.
          */
         HomeSaleEvent: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -2219,97 +2578,173 @@ export interface components {
             kind: "home_sale";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** When */
+            /**
+             * When
+             * @description The year of the sale.
+             */
             when: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
-            /** Price */
+            /**
+             * Price
+             * @description The sale price in today's dollars, grown by `appreciation` to the sale year.
+             */
             price: number;
             /**
              * Appreciation
+             * @description Annual price growth: a rate, or `general` to follow inflation.
              * @default general
              */
             appreciation?: number | "general";
-            /** Cost Basis */
+            /**
+             * Cost Basis
+             * @description Purchase price plus improvements, in actual dollars.
+             */
             cost_basis: number;
             /**
              * Selling Costs
+             * @description Commissions and closing costs, as a share of the price.
              * @default 0.06
              */
             selling_costs?: number;
             /**
              * Pay Off
+             * @description A liability id repaid from the proceeds, e.g. the mortgage.
              * @default null
              */
             pay_off?: string | null;
         };
-        /** Horizon */
+        /**
+         * Horizon
+         * @description The years simulated.
+         */
         Horizon: {
-            /** Start Year */
+            /**
+             * Start Year
+             * @description The first simulated year. Balances are as of its start, and "today's dollars" are its dollars.
+             */
             start_year: number;
             /**
              * End Age
+             * @description Simulate until every member has reached this age.
              * @default 95
              */
             end_age?: number;
             /**
              * End Year
+             * @description Or simulate until this year instead.
              * @default null
              */
             end_year?: number | null;
         };
-        /** HouseholdDoc */
+        /**
+         * HouseholdDoc
+         * @description Who is in the household: members, dependents, filing status, and state of residence.
+         */
         HouseholdDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
+            /** @description Filing status and state of residence. */
             household: components["schemas"]["HouseholdInfo"];
-            /** Members */
+            /**
+             * Members
+             * @description One or two adults.
+             */
             members: components["schemas"]["Member"][];
             /**
              * Dependents
+             * @description Children or other relatives the household supports.
              * @default []
              */
             dependents?: components["schemas"]["Dependent"][];
         };
         /** HouseholdInfo */
         HouseholdInfo: {
+            /**
+             * @description Two members file jointly or separately; one member files single, head of household, or as a qualifying
+             *     surviving spouse. After a death the survivor's status changes automatically.
+             */
             filing_status: components["schemas"]["FilingStatus"];
             /**
              * State
+             * @description State of residence: a key in rules/state_tax.yaml (`none` for no state income tax).
              * @default none
              */
             state?: string;
+        };
+        /**
+         * HsaAccount
+         * @description A Health Savings Account.
+         */
+        HsaAccount: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Asset Strategy
+             * @description How the account is invested: a static_allocation or a target_date glide path.
+             */
+            asset_strategy: components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"];
         };
         /**
          * HsaElection
          * @description Payroll HSA contribution (excluded from income tax and FICA). Employer money counts toward the limit.
          */
         HsaElection: {
-            /** Account */
+            /**
+             * Account
+             * @description The member's HSA.
+             */
             account: string;
             /**
              * Coverage
+             * @description The HDHP coverage, which sets the limit. With family coverage, spouses share one family limit.
              * @enum {string}
              */
             coverage: "self_only" | "family";
             /**
              * Amount
+             * @description Employee contribution per year, in today's dollars.
              * @default null
              */
             amount?: number | null;
             /**
              * Max
+             * @description Contribute the indexed limit for the coverage, less the employer contribution.
              * @default false
              */
             max?: boolean;
             /**
              * Include Catch Up
+             * @description Add the age 55+ catch-up when eligible.
              * @default false
              */
             include_catch_up?: boolean;
             /**
              * Employer
+             * @description The employer's contribution per year, in today's dollars.
              * @default 0
              */
             employer?: number;
@@ -2338,12 +2773,19 @@ export interface components {
              */
             catch_up_indexed?: boolean;
         };
-        /** IncomeDoc */
+        /**
+         * IncomeDoc
+         * @description Salaries (with payroll elections), pensions, and other income. Social Security comes from household.yaml.
+         */
         IncomeDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /**
              * Income Streams
+             * @description Each stream's `type` is `salary`, `pension`, or `other`.
              * @default []
              */
             income_streams?: (components["schemas"]["SalaryStream"] | components["schemas"]["PensionStream"] | components["schemas"]["OtherIncomeStream"])[];
@@ -2364,9 +2806,15 @@ export interface components {
              */
             healthcare?: number;
         };
-        /** InheritanceEvent */
+        /**
+         * InheritanceEvent
+         * @description Money or an IRA inherited from someone outside the household.
+         */
         InheritanceEvent: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -2375,38 +2823,53 @@ export interface components {
             kind: "inheritance";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** When */
+            /**
+             * When
+             * @description The year it's inherited.
+             */
             when: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
-            /** Amount */
+            /**
+             * Amount
+             * @description The value inherited.
+             */
             amount: number;
             /**
              * Dollars
+             * @description `today`: grown with inflation to the event year; `nominal`: that year's dollars.
              * @default today
              * @enum {string}
              */
             dollars?: "today" | "nominal";
-            /** Beneficiary */
+            /**
+             * Beneficiary
+             * @description The member who inherits.
+             */
             beneficiary: string;
             /**
              * Asset
+             * @description `cash` (tax-free), `brokerage` (with a stepped-up basis), or `inherited_ira` (opens a new inherited IRA).
              * @enum {string}
              */
             asset: "cash" | "brokerage" | "inherited_ira";
             /**
              * Account
+             * @description For `brokerage`, an existing brokerage account to receive it; for `inherited_ira`, the new account's id.
              * @default null
              */
             account?: string | null;
             /**
              * Decedent Started Rmds
+             * @description For `inherited_ira`: whether the original owner had started RMDs (then annual RMDs apply in years 1-9).
              * @default true
              */
             decedent_started_rmds?: boolean;
             /**
              * Asset Strategy
+             * @description For `inherited_ira`: how it's invested. Default: 60% stocks, 40% bonds.
              * @default null
              */
             asset_strategy?: (components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"]) | null;
@@ -2421,18 +2884,62 @@ export interface components {
             penalty_enforced_from: number;
         };
         /**
+         * InheritedAccount
+         * @description An IRA inherited from someone other than a spouse, under the 10-year rule.
+         */
+        InheritedAccount: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Asset Strategy
+             * @description How the account is invested: a static_allocation or a target_date glide path.
+             */
+            asset_strategy: components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"];
+            /**
+             * Inherited Year
+             * @description The year it was inherited; the 10-year clock starts from it.
+             */
+            inherited_year: number;
+            /**
+             * Decedent Started Rmds
+             * @description Whether the original owner had started RMDs. If so, annual RMDs also apply in years 1-9.
+             */
+            decedent_started_rmds: boolean;
+        };
+        /**
          * InheritedIraStrategy
          * @description How inherited IRAs are drawn down inside the 10-year window (required annual RMDs always apply).
          */
         InheritedIraStrategy: {
             /**
              * Kind
+             * @description `even` spreads it over the years left; `minimum_then_final` takes only required amounts until year 10;
+             *     `fill_bracket` withdraws up to a bracket each year.
              * @default even
              * @enum {string}
              */
             kind?: "even" | "minimum_then_final" | "fill_bracket";
             /**
              * Bracket Rate
+             * @description For `fill_bracket`: withdraw up to the top of this ordinary bracket, e.g. 0.22.
              * @default null
              */
             bracket_rate?: number | null;
@@ -2442,7 +2949,10 @@ export interface components {
          * @description Interest-only debt repaid as a lump sum at `payoff`.
          */
         InterestOnlyLoan: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results; events can pay the loan off by this id.
+             */
             id: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -2451,14 +2961,24 @@ export interface components {
             kind: "interest_only";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** Balance */
+            /**
+             * Balance
+             * @description The balance owed, repaid in full at `payoff`.
+             */
             balance: number;
-            /** Annual Rate */
+            /**
+             * Annual Rate
+             * @description The interest rate, e.g. 0.07.
+             */
             annual_rate: number;
-            /** Payoff */
+            /**
+             * Payoff
+             * @description When the balance is repaid as a lump sum.
+             */
             payoff: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
         };
         /** IraLimits */
@@ -2539,18 +3059,26 @@ export interface components {
              */
             indexed_from?: number | null;
         };
-        /** Legacy */
+        /**
+         * Legacy
+         * @description How the money left at the end is valued.
+         */
         Legacy: {
             /**
              * Heirs Tax Rate
+             * @description Income tax rate heirs pay on inherited pre-tax money (traditional retirement accounts and HSAs).
              * @default 0.25
              */
             heirs_tax_rate?: number;
         };
-        /** Levers */
+        /**
+         * Levers
+         * @description The decisions a scenario tests.
+         */
         Levers: {
             /**
              * Ss Claim Ages
+             * @description Social Security claiming age by member id: 67, or {years: 67, months: 6}. Default: full retirement age.
              * @default {}
              */
             ss_claim_ages?: {
@@ -2558,6 +3086,7 @@ export interface components {
             };
             /**
              * Mortality
+             * @description Lifespans: `none` (everyone reaches the end of the plan), `fixed` ages, or `sampled` from the life table.
              * @default {
              *       "kind": "none"
              *     }
@@ -2565,11 +3094,13 @@ export interface components {
             mortality?: components["schemas"]["NoMortality"] | components["schemas"]["FixedMortality"] | components["schemas"]["SampledMortality"];
             /**
              * Relocations
+             * @description Moves to another state, in order.
              * @default []
              */
             relocations?: components["schemas"]["Relocation"][];
             /**
              * Withdrawal Order
+             * @description The order accounts are drawn on to cover a shortfall: each of taxable, deferred, roth, and hsa once.
              * @default [
              *       "taxable",
              *       "deferred",
@@ -2580,25 +3111,33 @@ export interface components {
             withdrawal_order?: ("taxable" | "deferred" | "roth" | "hsa")[];
             /**
              * Early Withdrawals
+             * @description Before 59 1/2 (65 for HSAs): withdraw and pay the additional tax, or skip those accounts.
              * @default allow_with_penalty
              * @enum {string}
              */
             early_withdrawals?: "allow_with_penalty" | "block";
             /**
              * Surplus Sweep
+             * @description Where leftover cash is invested, in order. Default: the first brokerage account (else the first cash
+             *     account).
              * @default []
              */
             surplus_sweep?: components["schemas"]["SweepTarget"][];
-            /** @default null */
+            /**
+             * @description An emergency fund that withdrawals leave alone until everything else is used up.
+             * @default null
+             */
             cash_reserve?: components["schemas"]["CashReserve"] | null;
             /**
              * Roth Conversions
+             * @description Roth conversions: `none`, `fixed_amount`, or `fill_bracket`.
              * @default {
              *       "kind": "none"
              *     }
              */
             roth_conversions?: components["schemas"]["NoConversions"] | components["schemas"]["FixedAmountConversions"] | components["schemas"]["FillBracketConversions"];
             /**
+             * @description How inherited IRAs are drawn down within the 10-year window.
              * @default {
              *       "kind": "even",
              *       "bracket_rate": null
@@ -2607,21 +3146,32 @@ export interface components {
             inherited_ira?: components["schemas"]["InheritedIraStrategy"];
             /**
              * Contributions
+             * @description Recurring contributions outside payroll: IRAs, 529s, brokerage.
              * @default []
              */
             contributions?: components["schemas"]["Contribution"][];
             /**
              * Plan 529 Leftover
+             * @description What happens to a 529 once its beneficiary's qualified_education spending has ended.
              * @default keep
              * @enum {string}
              */
             plan_529_leftover?: "keep" | "change_beneficiary" | "roth_rollover" | "withdraw";
         };
-        /** LiabilitiesDoc */
+        /**
+         * LiabilitiesDoc
+         * @description Mortgages and other loans. Payments are made in addition to spending.
+         */
         LiabilitiesDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
-            /** Liabilities */
+            /**
+             * Liabilities
+             * @description Each loan's `kind` is `amortizing` or `interest_only`.
+             */
             liabilities?: (components["schemas"]["AmortizingLoan"] | components["schemas"]["InterestOnlyLoan"])[] | null;
         };
         /** LifetimeLearningCredit */
@@ -2636,17 +3186,25 @@ export interface components {
          * @description Year-end liquid assets (unswept cash plus cash and brokerage accounts) must stay at or above `amount`.
          */
         LiquidityFloor: {
-            /** Amount */
+            /**
+             * Amount
+             * @description The floor, in today's dollars.
+             */
             amount: number;
             /**
              * Start
+             * @description The first year the floor applies. Default: the start of the plan.
              * @default null
              */
             start?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
         };
-        /** Macro */
+        /**
+         * Macro
+         * @description Economic assumptions outside the market preset.
+         */
         Macro: {
             /**
+             * @description Default salary growth.
              * @default {
              *       "real_growth_rate": 0
              *     }
@@ -2655,7 +3213,10 @@ export interface components {
         };
         /** MarketAssumptionsDoc */
         MarketAssumptionsDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /** Presets */
             presets: components["schemas"]["MarketPreset"][];
@@ -2718,15 +3279,20 @@ export interface components {
              */
             inflation_spreads?: components["schemas"]["InflationSpreads"];
         };
-        /** MarketSelection */
+        /**
+         * MarketSelection
+         * @description Market assumptions: a preset from rules/market_assumptions.yaml, with optional changes.
+         */
         MarketSelection: {
             /**
              * Preset
+             * @description `forward_conservative`, `historical_us`, `pessimistic`, or `bootstrap` (historical years).
              * @default forward_conservative
              */
             preset?: string;
             /**
              * Overrides
+             * @description Dotted-path changes to preset fields, e.g. {"factors.stocks.mean": 0.06}.
              * @default {}
              */
             overrides?: {
@@ -2734,6 +3300,8 @@ export interface components {
             };
             /**
              * Deterministic Returns
+             * @description The constant return per asset class in deterministic runs: the geometric mean implied by the preset (a typical
+             *     compounded outcome) or the arithmetic mean.
              * @default geometric
              * @enum {string}
              */
@@ -2744,9 +3312,15 @@ export interface components {
          * @description A share of the lower-earning spouse's earned income, up to a cap (joint returns).
          */
         MarriedCoupleCredit: {
-            /** Rate */
+            /**
+             * Rate
+             * @description Share of the lower earner's wages.
+             */
             rate: number;
-            /** Earned Income Cap */
+            /**
+             * Earned Income Cap
+             * @description Wages counted at most.
+             */
             earned_income_cap: number;
         };
         /**
@@ -2754,9 +3328,15 @@ export interface components {
          * @description Employer matches `match` of each dollar deferred, on deferrals up to `up_to` of pay (cumulative).
          */
         MatchTier: {
-            /** Match */
+            /**
+             * Match
+             * @description Employer dollars per employee dollar deferred in this tier, e.g. 0.5.
+             */
             match: number;
-            /** Up To */
+            /**
+             * Up To
+             * @description The tier covers deferrals up to this share of pay, counting from the previous tier's `up_to`.
+             */
             up_to: number;
         };
         /** Medicare */
@@ -2773,29 +3353,58 @@ export interface components {
          * @description An adult in the household who can own accounts, earn income, and claim Social Security.
          */
         Member: {
-            /** Id */
+            /**
+             * Id
+             * @description How other documents refer to this person.
+             */
             id: string;
-            /** Name */
+            /**
+             * Name
+             * @description Display name.
+             */
             name: string;
-            /** Birth Year */
+            /**
+             * Birth Year
+             * @description Year of birth.
+             */
             birth_year: number;
-            /** Birth Month */
+            /**
+             * Birth Month
+             * @description 1-12. Used for age 59 1/2, Social Security claiming months, and retirement proration.
+             */
             birth_month: number;
-            /** Target Retirement Age */
+            /**
+             * Target Retirement Age
+             * @description When salary stops (prorated by month in that year). May be fractional, e.g. 62.5.
+             */
             target_retirement_age: number;
-            /** @default null */
+            /**
+             * @description The member's own Social Security record. Leave out if they have none; spousal and survivor benefits still
+             *     apply.
+             * @default null
+             */
             social_security?: components["schemas"]["SocialSecurityRecord"] | null;
             /**
              * Sex
+             * @description Picks the life table when lifespans are sampled. Without it, the average of both tables is used.
              * @default null
              */
             sex?: ("male" | "female") | null;
         };
-        /** MemberAgeAnchor */
+        /**
+         * MemberAgeAnchor
+         * @description The year a household member reaches an age.
+         */
         MemberAgeAnchor: {
-            /** Member */
+            /**
+             * Member
+             * @description A member id from household.yaml.
+             */
             member: string;
-            /** Age */
+            /**
+             * Age
+             * @description May be fractional (62.5), counted in months from the birth month.
+             */
             age: number;
         };
         /** Metadata */
@@ -2817,7 +3426,10 @@ export interface components {
         };
         /** MortalityDoc */
         MortalityDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             /** Male */
@@ -2840,10 +3452,13 @@ export interface components {
             indexed?: boolean;
             magi_threshold: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"];
         };
-        /** NoConversions */
+        /**
+         * NoConversions
+         * @description No Roth conversions.
+         */
         NoConversions: {
             /**
-             * @description discriminator enum property added by openapi-typescript
+             * @description `none`, `fixed_amount`, or `fill_bracket`. (enum property replaced by openapi-typescript)
              * @enum {string}
              */
             kind: "none";
@@ -2854,12 +3469,15 @@ export interface components {
          */
         NoMortality: {
             /**
-             * @description discriminator enum property added by openapi-typescript
+             * @description `none`, `fixed`, or `sampled`. (enum property replaced by openapi-typescript)
              * @enum {string}
              */
             kind: "none";
         };
-        /** NoStateTax */
+        /**
+         * NoStateTax
+         * @description No state income tax.
+         */
         NoStateTax: {
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -2884,11 +3502,20 @@ export interface components {
              */
             indexed?: boolean;
         };
-        /** OtherIncomeStream */
+        /**
+         * OtherIncomeStream
+         * @description Any other income: rental income, part-time work, gifts. No FICA.
+         */
         OtherIncomeStream: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
-            /** Owner */
+            /**
+             * Owner
+             * @description A member id, or `joint`.
+             */
             owner: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -2897,29 +3524,37 @@ export interface components {
             type: "other";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** Amount */
+            /**
+             * Amount
+             * @description Per year, in today's dollars.
+             */
             amount: number;
             /**
              * Start
+             * @description When it starts. Default: the start of the plan.
              * @default null
              */
             start?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * End
+             * @description When it ends (inclusive). Default: the end of the plan.
              * @default null
              */
             end?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * Index
+             * @description `general` grows with inflation; `none` stays at a fixed nominal amount.
              * @default general
              * @enum {string}
              */
             index?: "general" | "none";
             /**
              * Tax Character
+             * @description `ordinary` is taxed as ordinary income.
              * @default ordinary
              * @enum {string}
              */
@@ -2930,18 +3565,31 @@ export interface components {
          * @enum {string}
          */
         OwnershipConstraint: "individual_only" | "joint_or_individual";
-        /** PayrollElections */
+        /**
+         * PayrollElections
+         * @description Contributions taken from pay. They stop when the salary does.
+         */
         PayrollElections: {
             /**
              * Retirement Deferrals
+             * @description 401(k)-type deferrals, one per account. Only one may use `max`.
              * @default []
              */
             retirement_deferrals?: components["schemas"]["RetirementDeferral"][];
-            /** @default null */
+            /**
+             * @description The employer's matching contribution.
+             * @default null
+             */
             employer_match?: components["schemas"]["EmployerMatch"] | null;
-            /** @default null */
+            /**
+             * @description Payroll HSA contributions.
+             * @default null
+             */
             hsa?: components["schemas"]["HsaElection"] | null;
-            /** @default null */
+            /**
+             * @description A dependent-care FSA election.
+             * @default null
+             */
             dependent_care_fsa?: components["schemas"]["DependentCareFsaElection"] | null;
         };
         /** Penalties */
@@ -2957,48 +3605,74 @@ export interface components {
             /** Plan 529 Non Qualified Earnings Rate */
             plan_529_non_qualified_earnings_rate: number;
         };
-        /** PensionStream */
+        /**
+         * PensionStream
+         * @description A defined-benefit pension, taxed as ordinary income.
+         */
         PensionStream: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
-            /** Owner */
+            /**
+             * Owner
+             * @description The member who earned it.
+             */
             owner: string;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             type: "pension";
-            /** Annual Amount */
+            /**
+             * Annual Amount
+             * @description The annual benefit when it starts, in that year's dollars (not today's).
+             */
             annual_amount: number;
-            /** Start */
+            /**
+             * Start
+             * @description When payments begin.
+             */
             start: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
             /**
              * Cola
+             * @description Annual increase once it starts: a fixed rate, or `cpi` to follow inflation.
              * @default 0
              */
             cola?: number | "cpi";
             /**
              * Survivor Fraction
+             * @description The share that continues to a surviving spouse.
              * @default 0
              */
             survivor_fraction?: number;
         };
-        /** PersonalExemptions */
+        /**
+         * PersonalExemptions
+         * @description Fixed amounts subtracted per person after the standard deduction.
+         */
         PersonalExemptions: {
-            /** Per Person */
+            /**
+             * Per Person
+             * @description Per member alive during the year.
+             */
             per_person: number;
             /**
              * Per Dependent
+             * @description Per dependent claimed that year.
              * @default 0
              */
             per_dependent?: number;
             /**
              * Additional Age 65
+             * @description Extra per member 65 or older.
              * @default 0
              */
             additional_age_65?: number;
             /**
              * Indexed
+             * @description Whether the exemptions grow with inflation.
              * @default false
              */
             indexed?: boolean;
@@ -3007,10 +3681,14 @@ export interface components {
         PhaseBand: {
             /**
              * Until Age
+             * @description The band applies through this age of the reference member (inclusive). Leave out on the last band.
              * @default null
              */
             until_age?: number | null;
-            /** Multiplier */
+            /**
+             * Multiplier
+             * @description Base spending is multiplied by this, e.g. 0.85.
+             */
             multiplier: number;
         };
         /** PhaseOutRange */
@@ -3020,33 +3698,90 @@ export interface components {
             /** End */
             end: number;
         };
-        /** Plan529Deduction */
+        /**
+         * Plan529Account
+         * @description A 529 education savings plan.
+         */
+        Plan529Account: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Asset Strategy
+             * @description How the account is invested: a static_allocation or a target_date glide path.
+             */
+            asset_strategy: components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"];
+            /**
+             * Beneficiary
+             * @description A dependent (or a member, for adult education).
+             */
+            beneficiary: string;
+            /**
+             * Cost Basis
+             * @description Contributions to date, which set the taxable earnings share of a non-qualified withdrawal.
+             */
+            cost_basis: number;
+            /**
+             * Opened Year
+             * @description For the 15-year rule on rollovers to a Roth IRA.
+             */
+            opened_year: number;
+        };
+        /**
+         * Plan529Deduction
+         * @description A subtraction for contributions to 529 plans.
+         */
         Plan529Deduction: {
-            /** Cap */
+            /**
+             * Cap
+             * @description The most deducted per year, per beneficiary or per return.
+             */
             cap: number;
             /**
              * Per
+             * @description Whether `cap` applies per beneficiary or per return.
              * @default beneficiary
              * @enum {string}
              */
             per?: "return" | "beneficiary";
             /**
              * Married Filing Separately Cap
+             * @description A different cap for married filing separately. Default: `cap`.
              * @default null
              */
             married_filing_separately_cap?: number | null;
             /**
              * Indexed
+             * @description Whether the cap grows with inflation.
              * @default false
              */
             indexed?: boolean;
             /**
              * Rounding
+             * @description An indexed cap is rounded to a multiple of this.
              * @default 10
              */
             rounding?: number;
             /**
              * Carryforward
+             * @description Contributions over the cap can be deducted in later years.
              * @default false
              */
             carryforward?: boolean;
@@ -3060,67 +3795,105 @@ export interface components {
             /** Contribution Lookback Years */
             contribution_lookback_years: number;
         };
-        /** PostTarget */
+        /**
+         * PostTarget
+         * @description After the target year, keep reducing the stock share in a straight line.
+         */
         PostTarget: {
-            /** Years After */
+            /**
+             * Years After
+             * @description Years after the target year to reach `final_equity`.
+             */
             years_after: number;
-            /** Final Equity */
+            /**
+             * Final Equity
+             * @description The final stock share.
+             */
             final_equity: number;
         };
-        /** ProgressiveStateTax */
+        /**
+         * ProgressiveStateTax
+         * @description Bracketed rates by filing status.
+         */
         ProgressiveStateTax: {
             /**
              * Indexed
+             * @description Whether brackets and standard deductions grow with inflation from the rules' base year.
              * @default true
              */
             indexed?: boolean;
             /**
              * Exempt Social Security
+             * @description Subtract the federally taxable part of Social Security benefits.
              * @default true
              */
             exempt_social_security?: boolean;
             /**
              * Capital Gains Exclusion
+             * @description Share of net long-term capital gains excluded.
              * @default 0
              */
             capital_gains_exclusion?: number;
             /**
              * Capital Loss Limit
+             * @description Net capital losses deductible per year, if lower than federal. Default: the federal limit.
              * @default null
              */
             capital_loss_limit?: number | null;
             /**
              * Retirement Income Exclusions
+             * @description Subtractions of pension and retirement-account income, applied in order.
              * @default []
              */
             retirement_income_exclusions?: components["schemas"]["RetirementIncomeExclusion"][];
             /**
              * Subtract Health Premiums
+             * @description Subtract health insurance premiums paid with after-tax money (including Medicare and Medigap).
              * @default false
              */
             subtract_health_premiums?: boolean;
             /**
              * Additional Tax Share
+             * @description State tax as a share of the federal early-withdrawal and HSA additional taxes.
              * @default 0
              */
             additional_tax_share?: number;
-            /** @default null */
+            /**
+             * @description A subtraction for 529 contributions.
+             * @default null
+             */
             plan_529_deduction?: components["schemas"]["Plan529Deduction"] | null;
-            /** @default null */
+            /**
+             * @description A fixed standard deduction. Give this or `sliding_standard_deduction`, or neither.
+             * @default null
+             */
             standard_deduction?: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"] | null;
-            /** @default null */
+            /**
+             * @description A standard deduction that shrinks as income rises.
+             * @default null
+             */
             sliding_standard_deduction?: components["schemas"]["SlidingStandardDeduction"] | null;
-            /** @default null */
+            /**
+             * @description Amounts subtracted per person.
+             * @default null
+             */
             personal_exemptions?: components["schemas"]["PersonalExemptions"] | null;
-            /** @default null */
+            /**
+             * @description A credit for two-earner couples filing jointly.
+             * @default null
+             */
             married_couple_credit?: components["schemas"]["MarriedCoupleCredit"] | null;
-            /** @default null */
+            /**
+             * @description A state child and dependent care credit.
+             * @default null
+             */
             dependent_care_credit?: components["schemas"]["StateDependentCareCredit"] | null;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             kind: "progressive";
+            /** @description For each filing status, [[upper bound of taxable income, rate], ...], ending with [.inf, top rate]. */
             brackets: components["schemas"]["ByFilingStatus_Annotated_tuple_tuple_float__float____________AfterValidator__"];
         };
         /**
@@ -3135,42 +3908,91 @@ export interface components {
             /** Additional Rate Per Month */
             additional_rate_per_month: number | string;
         };
-        /** Relocation */
+        /**
+         * Relocation
+         * @description A move to another state.
+         */
         Relocation: {
-            /** When */
+            /**
+             * When
+             * @description The year of the move.
+             */
             when: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
-            /** State */
+            /**
+             * State
+             * @description A key in rules/state_tax.yaml.
+             */
             state: string;
+        };
+        /**
+         * RetirementAccount
+         * @description A 401(k) or IRA, traditional or Roth.
+         */
+        RetirementAccount: {
+            /**
+             * Id
+             * @description How income elections, levers, and events refer to the account.
+             */
+            id: string;
+            /**
+             * Owner
+             * @description A member id, or `joint`. IRAs, 401(k)s, HSAs, and 529s can't be joint.
+             */
+            owner: string;
+            /**
+             * Type
+             * @description An account type from rules/account_types.yaml, e.g. traditional_401k, roth_ira, brokerage, savings.
+             */
+            type: string;
+            /**
+             * Balance
+             * @description Balance at the start of the scenario's first year.
+             */
+            balance: number;
+            /**
+             * Asset Strategy
+             * @description How the account is invested: a static_allocation or a target_date glide path.
+             */
+            asset_strategy: components["schemas"]["TargetDateStrategy"] | components["schemas"]["StaticAllocation"];
         };
         /**
          * RetirementDeferral
          * @description Employee 401(k)-type deferral into one account. Traditional deferrals reduce taxable wages; Roth don't.
          */
         RetirementDeferral: {
-            /** Account */
+            /**
+             * Account
+             * @description A traditional or Roth 401(k)-type account owned by the salary's owner.
+             */
             account: string;
             /**
              * Percent
+             * @description Share of gross salary, e.g. 0.08.
              * @default null
              */
             percent?: number | null;
             /**
              * Amount
+             * @description Per year, in today's dollars.
              * @default null
              */
             amount?: number | null;
             /**
              * Max
+             * @description Defer the indexed elective-deferral limit, less the member's other deferrals.
              * @default false
              */
             max?: boolean;
             /**
              * Include Catch Up
+             * @description Add the age 50+ (or larger age 60-63) catch-up when eligible.
              * @default false
              */
             include_catch_up?: boolean;
             /**
              * Roth Catch Up Account
+             * @description Where catch-ups go when SECURE 2.0 requires them to be Roth (prior-year wages over the indexed threshold).
+             *     Required for a traditional account with catch-ups.
              * @default null
              */
             roth_catch_up_account?: string | null;
@@ -3181,26 +4003,41 @@ export interface components {
          *     and Roth conversions). Several apply in order, each to the retirement income the earlier ones left.
          */
         RetirementIncomeExclusion: {
-            /** Amount */
+            /**
+             * Amount
+             * @description The most excluded per qualifying person. Not indexed.
+             */
             amount: number;
-            /** Min Age */
+            /**
+             * Min Age
+             * @description A member qualifies from this age (at the end of the year).
+             */
             min_age: number;
-            /** @default null */
+            /**
+             * @description Only households with federal AGI below this qualify. Default: no income limit.
+             * @default null
+             */
             agi_limit?: components["schemas"]["ByFilingStatus_Union_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0______NoneType__"] | null;
             /**
              * Pooled For Joint
+             * @description On a joint return where both spouses qualify, they share one cap of twice `amount`, whoever received the
+             *     income.
              * @default false
              */
             pooled_for_joint?: boolean;
             /**
              * Bars Credits
+             * @description Claiming it forfeits the state's credits that year. It's optional, so the engine takes the lower tax.
              * @default false
              */
             bars_credits?: boolean;
         };
         /** RmdDoc */
         RmdDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             /** Start Age */
@@ -3242,34 +4079,50 @@ export interface components {
         SalaryGrowth: {
             /**
              * Real Growth Rate
+             * @description Annual raise above inflation, for salaries that don't set their own.
              * @default 0
              */
             real_growth_rate?: number;
         };
-        /** SalaryStream */
+        /**
+         * SalaryStream
+         * @description Wages from a job, with payroll elections. Pays FICA.
+         */
         SalaryStream: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
-            /** Owner */
+            /**
+             * Owner
+             * @description The member who earns it.
+             */
             owner: string;
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             type: "salary";
-            /** Amount */
+            /**
+             * Amount
+             * @description Current annual gross pay.
+             */
             amount: number;
             /**
              * Real Growth Rate
+             * @description Annual raise above inflation. Default: the scenario's `macro.salary_growth`.
              * @default null
              */
             real_growth_rate?: number | null;
             /**
              * End
+             * @description When the salary stops. Default: the owner's retirement (prorated by month in that year).
              * @default null
              */
             end?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
+             * @description Deferrals, employer match, HSA, and dependent-care FSA.
              * @default {
              *       "retirement_deferrals": [],
              *       "employer_match": null,
@@ -3292,23 +4145,31 @@ export interface components {
              */
             kind: "sampled";
         };
-        /** ScenarioDoc */
+        /**
+         * ScenarioDoc
+         * @description One plan for the profile: horizon, market assumptions, decisions (levers), and what-if changes.
+         */
         ScenarioDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             /**
              * Description
+             * @description What the scenario tests, shown in listings.
              * @default null
              */
             description?: string | null;
             /**
              * Rule Set
-             * @description "latest" or a tax year
+             * @description The rules to use: `latest`, or a tax year such as 2026 to keep results fixed when new rules arrive.
              * @default latest
              */
             rule_set?: string | number;
             horizon: components["schemas"]["Horizon"];
             /**
+             * @description Market assumptions.
              * @default {
              *       "preset": "forward_conservative",
              *       "overrides": {},
@@ -3325,6 +4186,7 @@ export interface components {
              */
             macro?: components["schemas"]["Macro"];
             /**
+             * @description The decisions being tested.
              * @default {
              *       "ss_claim_ages": {},
              *       "mortality": {
@@ -3354,11 +4216,14 @@ export interface components {
             levers?: components["schemas"]["Levers"];
             /**
              * Events
+             * @description What-if events, in addition to the profile's events.yaml.
              * @default []
              */
             events?: (components["schemas"]["WindfallEvent"] | components["schemas"]["HomeSaleEvent"] | components["schemas"]["InheritanceEvent"])[];
             /**
              * Overrides
+             * @description Changes to profile documents for this scenario only, as dotted paths per document, e.g.
+             *     {household: {"members.alex.target_retirement_age": 62}}. List items are addressed by id.
              * @default {}
              */
             overrides?: {
@@ -3394,18 +4259,25 @@ export interface components {
          * @description A standard deduction that shrinks as state income rises (e.g. Wisconsin).
          */
         SlidingStandardDeduction: {
+            /** @description The deduction at low incomes. */
             maximum: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"];
+            /** @description State income where the reduction begins. */
             phase_out_start: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0_____"];
+            /** @description Reduction per dollar of state income above the start. */
             phase_out_rate: components["schemas"]["ByFilingStatus_Annotated_float__FieldInfo_annotation_NoneType__required_True__metadata__Ge_ge_0___Le_le_1_____"];
             /**
              * Head Of Household Floor
+             * @description `single`: head of household never gets less than the single schedule (Wisconsin).
              * @default null
              */
             head_of_household_floor?: "single" | null;
         };
         /** SocialSecurityDoc */
         SocialSecurityDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
             metadata: components["schemas"]["Metadata"];
             /** Earliest Claim Age */
@@ -3426,10 +4298,14 @@ export interface components {
         };
         /**
          * SocialSecurityRecord
-         * @description A member's own Social Security record (PLAN.md D6).
+         * @description A member's own Social Security record.
          */
         SocialSecurityRecord: {
-            /** Pia At Fra */
+            /**
+             * Pia At Fra
+             * @description Monthly benefit at full retirement age (the Primary Insurance Amount), in today's dollars, from the SSA
+             *     statement.
+             */
             pia_at_fra: number;
         };
         /** SocialSecurityTaxability */
@@ -3447,9 +4323,11 @@ export interface components {
         };
         /** Spending */
         Spending: {
+            /** @description Ordinary annual spending. */
             base: components["schemas"]["BaseSpending"];
             /**
              * Categories
+             * @description Spending on top of base: once, every few years, or for a stretch of years.
              * @default []
              */
             categories?: components["schemas"]["SpendingCategory"][];
@@ -3459,56 +4337,77 @@ export interface components {
          * @description Spending on top of base. Active from `start` to `end` (inclusive), every `every_years`, or `once`.
          */
         SpendingCategory: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in the results' spending breakdown and the ledger.
+             */
             id: string;
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** Amount */
+            /**
+             * Amount
+             * @description Today's dollars per year it occurs.
+             */
             amount: number;
             /**
              * Index
+             * @description How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`.
              * @default general
              * @enum {string}
              */
             index?: "general" | "education" | "healthcare" | "none";
             /**
              * Tags
+             * @description `qualified_education` (education credits, paid from 529s) and `dependent_care` (care credit, FSA).
              * @default []
              */
             tags?: ("qualified_education" | "dependent_care")[];
             /**
              * Beneficiary
+             * @description The dependent (or member) it's for. Required with `qualified_education`.
              * @default null
              */
             beneficiary?: string | null;
             /**
              * Start
+             * @description The first year. Default: the start of the plan.
              * @default null
              */
             start?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * End
+             * @description The last year (inclusive). Default: the end of the plan.
              * @default null
              */
             end?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
             /**
              * Every Years
+             * @description Repeat every N years from `start`. Default: every year.
              * @default null
              */
             every_years?: number | null;
             /**
              * Once
+             * @description A single year. Can't be combined with `start`, `end`, or `every_years`.
              * @default null
              */
             once?: (components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"]) | null;
         };
-        /** SpendingDoc */
+        /**
+         * SpendingDoc
+         * @description What the household spends: a base amount plus categories.
+         */
         SpendingDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
+            /** @description Base spending and categories. */
             spending: components["schemas"]["Spending"];
         };
         /**
@@ -3516,9 +4415,15 @@ export interface components {
          * @description Multipliers on base spending by the reference member's age (e.g. go-go / slow-go / no-go years).
          */
         SpendingPhases: {
-            /** Reference */
+            /**
+             * Reference
+             * @description The member whose age selects the band.
+             */
             reference: string;
-            /** Bands */
+            /**
+             * Bands
+             * @description Bands in increasing age order; the last has no `until_age`.
+             */
             bands: components["schemas"]["PhaseBand"][];
         };
         /** SpousalRules */
@@ -3549,34 +4454,64 @@ export interface components {
          * @description A state care credit computed like the federal one (on federal AGI) with its own caps and rate table.
          */
         StateDependentCareCredit: {
-            /** Expense Cap One */
+            /**
+             * Expense Cap One
+             * @description Expenses counted with one qualifying person.
+             */
             expense_cap_one: number;
-            /** Expense Cap Two Or More */
+            /**
+             * Expense Cap Two Or More
+             * @description Expenses counted with two or more.
+             */
             expense_cap_two_or_more: number;
-            /** Max Rate */
+            /**
+             * Max Rate
+             * @description The credit rate at low incomes.
+             */
             max_rate: number;
-            /** Agi Threshold */
+            /**
+             * Agi Threshold
+             * @description Federal AGI where the rate starts falling.
+             */
             agi_threshold: number;
-            /** Step */
+            /**
+             * Step
+             * @description The rate falls one point per `step` (or fraction) of AGI over the threshold.
+             */
             step: number;
-            /** Floor Rate */
+            /**
+             * Floor Rate
+             * @description The lowest rate.
+             */
             floor_rate: number;
         };
-        /** StateRules */
+        /**
+         * StateRules
+         * @description One state's rules.
+         */
         StateRules: {
-            /** Name */
+            /**
+             * Name
+             * @description The state's name.
+             */
             name: string;
             /**
              * Community Property
+             * @description A community (or marital) property state: both halves of joint property get a stepped-up basis at the first
+             *     death.
              * @default false
              */
             community_property?: boolean;
             /**
              * Sources
+             * @description Where each figure comes from: forms, instructions, statutes, with links and the date checked.
              * @default []
              */
             sources?: string[];
-            /** Tax */
+            /**
+             * Tax
+             * @description The income tax: `kind` is `none`, `flat`, or `progressive`.
+             */
             tax: components["schemas"]["NoStateTax"] | components["schemas"]["FlatStateTax"] | components["schemas"]["ProgressiveStateTax"];
         };
         /**
@@ -3584,28 +4519,47 @@ export interface components {
          * @description Income tax rules per state, keyed by code (e.g. "WI"). A household's `state` picks one; "none" is required.
          */
         StateTaxDoc: {
-            /** Schema Version */
+            /**
+             * Schema Version
+             * @description The document format's version. Currently 1 for every document.
+             */
             schema_version: number;
-            /** Base Year */
+            /**
+             * Base Year
+             * @description The tax year the amounts are for. Indexed amounts grow with inflation from here.
+             */
             base_year: number;
-            /** States */
+            /**
+             * States
+             * @description Rules by state code: `none`, `WI`, ...
+             */
             states: {
                 [key: string]: components["schemas"]["StateRules"];
             };
         };
-        /** StaticAllocation */
+        /**
+         * StaticAllocation
+         * @description A fixed mix, rebalanced every year. The weights must sum to 1.
+         */
         StaticAllocation: {
             /**
              * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
             kind: "static_allocation";
-            /** Stocks */
+            /**
+             * Stocks
+             * @description Share in stocks, e.g. 0.70.
+             */
             stocks: number;
-            /** Bonds */
+            /**
+             * Bonds
+             * @description Share in bonds.
+             */
             bonds: number;
             /**
              * Cash
+             * @description Share in cash.
              * @default 0
              */
             cash?: number;
@@ -3624,15 +4578,20 @@ export interface components {
         SuccessCriteria: {
             /**
              * No Shortfall
+             * @description Fail a path in any year spending and taxes aren't fully paid.
              * @default true
              */
             no_shortfall?: boolean;
             /**
              * Shortfall Tolerance
+             * @description Ignore a yearly shortfall up to this many dollars (rounding).
              * @default 1
              */
             shortfall_tolerance?: number;
-            /** @default null */
+            /**
+             * @description Fail a path if cash plus brokerage falls below a floor at a year end.
+             * @default null
+             */
             liquidity_floor?: components["schemas"]["LiquidityFloor"] | null;
         };
         /** SurvivorRules */
@@ -3653,10 +4612,14 @@ export interface components {
          * @description Where year-end surplus cash goes, in priority order.
          */
         SweepTarget: {
-            /** Account */
+            /**
+             * Account
+             * @description A brokerage or cash account.
+             */
             account: string;
             /**
              * Up To Balance
+             * @description Fill only up to this balance (today's dollars), then move to the next target. Default: no cap.
              * @default null
              */
             up_to_balance?: number | null;
@@ -3671,29 +4634,39 @@ export interface components {
              * @enum {string}
              */
             kind: "target_date";
-            /** Target Year */
+            /**
+             * Target Year
+             * @description Usually the owner's retirement year, or a 529 beneficiary's first college year.
+             */
             target_year: number;
             /**
              * Glide Path
+             * @description A glide path id from rules/glide_paths.yaml.
              * @default linear_default
              */
             glide_path?: string;
             /**
              * Start Equity
+             * @description Override: the stock share until `years_before` the target year.
              * @default null
              */
             start_equity?: number | null;
             /**
              * Years Before
+             * @description Override: how many years before the target year the stock share starts falling.
              * @default null
              */
             years_before?: number | null;
             /**
              * Target Equity
+             * @description Override: the stock share at the target year.
              * @default null
              */
             target_equity?: number | null;
-            /** @default null */
+            /**
+             * @description Override: keep reducing the stock share after the target year.
+             * @default null
+             */
             post_target?: components["schemas"]["PostTarget"] | null;
         };
         /**
@@ -3727,9 +4700,15 @@ export interface components {
             contributor_covered: components["schemas"]["ByFilingStatus_PhaseOutRange_"];
             spouse_covered_only: components["schemas"]["PhaseOutRange"];
         };
-        /** WindfallEvent */
+        /**
+         * WindfallEvent
+         * @description A one-time receipt: a bonus, a gift, a business sale.
+         */
         WindfallEvent: {
-            /** Id */
+            /**
+             * Id
+             * @description Shown in results and the ledger.
+             */
             id: string;
             /**
              * @description discriminator enum property added by openapi-typescript
@@ -3738,32 +4717,43 @@ export interface components {
             kind: "windfall";
             /**
              * Description
+             * @description A note for yourself.
              * @default null
              */
             description?: string | null;
-            /** When */
+            /**
+             * When
+             * @description The year it arrives.
+             */
             when: components["schemas"]["YearAnchor"] | components["schemas"]["MemberAgeAnchor"] | components["schemas"]["DependentAgeAnchor"] | components["schemas"]["EventAnchor"];
-            /** Amount */
+            /**
+             * Amount
+             * @description The amount received.
+             */
             amount: number;
             /**
              * Dollars
+             * @description `today`: grown with inflation to the event year; `nominal`: that year's dollars.
              * @default today
              * @enum {string}
              */
             dollars?: "today" | "nominal";
             /**
              * Tax Character
+             * @description How it's taxed.
              * @default tax_free
              * @enum {string}
              */
             tax_character?: "tax_free" | "ordinary" | "long_term_gain";
             /**
              * Owner
+             * @description Whose income it is, for an ordinary windfall. Default: joint.
              * @default null
              */
             owner?: string | null;
             /**
              * Deposit To
+             * @description An account to deposit it in. Default: cash, which then pays the year's bills or is swept.
              * @default null
              */
             deposit_to?: string | null;
@@ -3773,9 +4763,15 @@ export interface components {
          * @enum {string}
          */
         WithdrawalTax: "ordinary_income" | "none" | "capital_gains" | "conditional_medical" | "conditional_education";
-        /** YearAnchor */
+        /**
+         * YearAnchor
+         * @description A calendar year.
+         */
         YearAnchor: {
-            /** Year */
+            /**
+             * Year
+             * @description The calendar year.
+             */
             year: number;
         };
     };

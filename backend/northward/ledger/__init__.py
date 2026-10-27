@@ -1,1 +1,1 @@
-"""Transaction, TaxCategory, and CashBook ledger primitives (Phase 2)."""
+"""Ledger primitives: Transaction, TaxCategory, and Books."""

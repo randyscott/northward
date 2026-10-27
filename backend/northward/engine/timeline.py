@@ -79,7 +79,7 @@ class Timeline:
         return age_point(person, age).year
 
     def point(self, anchor: Anchor) -> Point | None:
-        """When an anchor falls. None: it doesn't happen during the simulation (death, until Phase 5)."""
+        """When an anchor falls. None: it doesn't happen during the simulation (a death after the plan ends)."""
         if isinstance(anchor, YearAnchor):
             return Point(anchor.year, 0.0)
         if isinstance(anchor, MemberAgeAnchor):

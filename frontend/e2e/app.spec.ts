@@ -1,4 +1,4 @@
-// Phase 9A's "done when": create a profile, edit a lever, run Monte Carlo, and compare two scenarios entirely in the
+// The core journey: create a profile, edit a lever, run Monte Carlo, and compare two scenarios entirely in the
 // browser, and find all of it still there after restarting the app.
 import { expect, type Page, test } from "@playwright/test";
 

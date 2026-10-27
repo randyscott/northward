@@ -1,5 +1,5 @@
 # Federal income and payroll tax rules, tax year 2026.
-# Sections marked `indexed: true` are inflation-adjusted each simulated year by simulated CPI (PLAN.md D9);
+# Sections marked `indexed: true` are inflation-adjusted each simulated year by simulated CPI (docs/decisions.md D9);
 # statutory fixed amounts (NIIT, SS taxability, Additional Medicare, CTC phase-out, education credits) are not.
 # Filing-status tables: qualifying_surviving_spouse (QSS) uses the married_filing_jointly value unless given
 # explicitly. A null value means the status is ineligible.

@@ -1,7 +1,7 @@
 # Healthcare rules: Medicare Part B/D premiums and IRMAA, the ACA age curve, and default household cost
 # assumptions (override any of them in a profile's health_costs.yaml). Dollar amounts are 2026 and grow with
 # healthcare inflation (CPI plus the market preset's healthcare spread); IRMAA thresholds are CPI-indexed.
-# ACA premium subsidies aren't modeled (PLAN.md Q6): individual-market premiums are unsubsidized.
+# ACA premium subsidies aren't modeled (docs/modeling.md): individual-market premiums are unsubsidized.
 schema_version: 1
 
 metadata:

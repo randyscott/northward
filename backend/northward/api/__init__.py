@@ -1,1 +1,1 @@
-"""FastAPI application layer (Phase 8)."""
+"""FastAPI application layer."""

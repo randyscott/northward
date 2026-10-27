@@ -1,1 +1,1 @@
-"""Household outflows: spending and debt service (Phase 2)."""
+"""Household outflows: spending and debt service."""

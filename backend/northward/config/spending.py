@@ -1,4 +1,4 @@
-"""Spending: a base annual amount plus phased or periodic categories (PLAN.md §4.1)."""
+"""Spending: a base annual amount plus phased or periodic categories (docs/configuration/spending.md)."""
 
 from __future__ import annotations
 
@@ -15,15 +15,19 @@ SpendingTag = Literal["qualified_education", "dependent_care"]
 
 
 class PhaseBand(StrictModel):
-    until_age: Age | None = None  # inclusive; None on the last band
+    until_age: Age | None = None
+    """The band applies through this age of the reference member (inclusive). Leave out on the last band."""
     multiplier: float = Field(ge=0)
+    """Base spending is multiplied by this, e.g. 0.85."""
 
 
 class SpendingPhases(StrictModel):
     """Multipliers on base spending by the reference member's age (e.g. go-go / slow-go / no-go years)."""
 
     reference: Identifier
+    """The member whose age selects the band."""
     bands: tuple[PhaseBand, ...] = Field(min_length=1)
+    """Bands in increasing age order; the last has no `until_age`."""
 
     @model_validator(mode="after")
     def _check_bands(self) -> SpendingPhases:
@@ -39,31 +43,45 @@ class SpendingPhases(StrictModel):
 
 
 class BaseSpending(StrictModel):
-    amount: Money  # today's dollars per year
+    """Ordinary living costs, excluding taxes, healthcare, and loan payments (which are modeled separately)."""
+
+    amount: Money
+    """Annual spending in today's dollars."""
     index: SpendingIndex = "general"
-    # Fractional change from the first full year all members are retired (e.g. -0.10).
+    """How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`."""
     retirement_change: float = Field(default=0.0, ge=-1)
-    # Healthcare costs are modeled separately (rules/healthcare.yaml + health_costs.yaml) unless this is true,
-    # meaning base spending already covers them.
+    """Fractional change from the first full year all members are retired, e.g. -0.10."""
     includes_healthcare: bool = False
-    # After the first death in a two-member household, base spending is multiplied by this.
+    """True if `amount` already covers healthcare, which turns off the healthcare cost model."""
     survivor_multiplier: float = Field(default=0.75, ge=0)
+    """After the first death in a two-member household, base spending is multiplied by this."""
     phases: SpendingPhases | None = None
+    """Multipliers by a member's age, e.g. spending less in later decades."""
 
 
 class SpendingCategory(StrictModel):
     """Spending on top of base. Active from `start` to `end` (inclusive), every `every_years`, or `once`."""
 
     id: Identifier
+    """Shown in the results' spending breakdown and the ledger."""
     description: str | None = None
-    amount: Money  # today's dollars per occurrence
+    """A note for yourself."""
+    amount: Money
+    """Today's dollars per year it occurs."""
     index: SpendingIndex = "general"
+    """How it grows: `general` (CPI), `education` or `healthcare` (CPI plus the preset's spread), or `none`."""
     tags: tuple[SpendingTag, ...] = ()
+    """`qualified_education` (education credits, paid from 529s) and `dependent_care` (care credit, FSA)."""
     beneficiary: Identifier | None = None
-    start: Anchor | None = None  # None: the simulation start year
-    end: Anchor | None = None  # None: the end of the simulation
+    """The dependent (or member) it's for. Required with `qualified_education`."""
+    start: Anchor | None = None
+    """The first year. Default: the start of the plan."""
+    end: Anchor | None = None
+    """The last year (inclusive). Default: the end of the plan."""
     every_years: int | None = Field(default=None, ge=1)
+    """Repeat every N years from `start`. Default: every year."""
     once: Anchor | None = None
+    """A single year. Can't be combined with `start`, `end`, or `every_years`."""
 
     @model_validator(mode="after")
     def _check(self) -> SpendingCategory:
@@ -78,7 +96,9 @@ class SpendingCategory(StrictModel):
 
 class Spending(StrictModel):
     base: BaseSpending
+    """Ordinary annual spending."""
     categories: tuple[SpendingCategory, ...] = ()
+    """Spending on top of base: once, every few years, or for a stretch of years."""
 
     @model_validator(mode="after")
     def _check_unique(self) -> Spending:
@@ -90,4 +110,7 @@ class Spending(StrictModel):
 
 
 class SpendingDoc(Document):
+    """What the household spends: a base amount plus categories."""
+
     spending: Spending
+    """Base spending and categories."""

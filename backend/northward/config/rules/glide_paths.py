@@ -1,4 +1,4 @@
-"""Target-date glide paths (PLAN.md §4.2)."""
+"""Target-date glide paths (docs/configuration/rules.md)."""
 
 from __future__ import annotations
 
@@ -10,8 +10,12 @@ from northward.config.base import Document, Identifier, Rate, StrictModel
 
 
 class PostTarget(StrictModel):
+    """After the target year, keep reducing the stock share in a straight line."""
+
     years_after: int = Field(gt=0)
+    """Years after the target year to reach `final_equity`."""
     final_equity: Rate
+    """The final stock share."""
 
 
 class NonEquitySplit(StrictModel):

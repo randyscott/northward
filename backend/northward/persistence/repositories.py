@@ -1,11 +1,11 @@
-"""All reads and writes of stored configuration and runs go through these repositories (PLAN.md Phase 7).
+"""All reads and writes of stored configuration and runs go through these repositories.
 
 Writes are validated before anything is stored: each document against its Pydantic model, then the whole profile and
 every scenario of it, loaded as they would be after the change. A change that introduces a problem is rejected with
 a `ConfigError`, so an invalid document never lands in the database. (Problems that already existed, e.g. after new
 rules were seeded, don't block an edit that leaves them unchanged.)
 
-`ProfileRepo` takes an `owner_user_id` for the per-user scoping of Phase 10 (D17); None means single-user mode.
+`ProfileRepo` takes an `owner_user_id` for future per-user scoping (D17); None means single-user mode.
 """
 
 from __future__ import annotations

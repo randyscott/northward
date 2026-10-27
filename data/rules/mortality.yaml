@@ -1,5 +1,5 @@
 # SSA period life table: probability of dying within one year at each exact age (q_x), by sex.
-# Used to sample ages at death in Monte Carlo runs (Phase 6); deterministic runs use scenario death ages.
+# Used to sample ages at death in Monte Carlo runs; deterministic runs use scenario death ages.
 schema_version: 1
 
 metadata:

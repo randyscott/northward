@@ -1,4 +1,4 @@
-# Social Security benefit rules. Benefits start from each member's PIA at full retirement age (PLAN.md D6);
+# Social Security benefit rules. Benefits start from each member's PIA at full retirement age (docs/decisions.md D6);
 # COLAs follow simulated CPI. Reduction rates may be written as fractions of a percent, e.g. "5/9%".
 schema_version: 1
 

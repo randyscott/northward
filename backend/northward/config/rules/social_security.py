@@ -1,4 +1,4 @@
-"""Social Security benefit rules (PLAN.md D6: benefits start from each member's PIA at full retirement age)."""
+"""Social Security benefit rules (docs/decisions.md D6: benefits start from each member's PIA at full retirement age)."""
 
 from __future__ import annotations
 

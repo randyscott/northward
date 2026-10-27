@@ -1,4 +1,4 @@
-"""Phase 6 configuration: historical returns, Student-t and bootstrap presets, goals, and sampled mortality."""
+"""Monte Carlo configuration: historical returns, Student-t and bootstrap presets, goals, and sampled mortality."""
 
 import numpy as np
 import pytest

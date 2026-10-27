@@ -402,7 +402,7 @@ def main(argv: list[str] | None = None) -> int:
     add_db_commands(subparsers)
     add_runs_commands(subparsers)
 
-    serve = subparsers.add_parser("serve", help="Run the HTTP API (Phase 8) on the database.")
+    serve = subparsers.add_parser("serve", help="Run the HTTP API and web UI on the database.")
     serve.add_argument("--host", default="127.0.0.1", help="Interface to listen on (default: localhost only).")
     serve.add_argument("--port", type=int, default=8000)
     serve.add_argument("--workers", type=int, help="Monte Carlo worker processes (default: one per CPU).")

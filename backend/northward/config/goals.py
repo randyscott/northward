@@ -1,4 +1,4 @@
-"""Profile goals: what counts as a successful Monte Carlo path, and how legacy is valued (PLAN.md D35, D36)."""
+"""Profile goals: what counts as a successful Monte Carlo path, and how legacy is valued (docs/decisions.md D35, D36)."""
 
 from __future__ import annotations
 
@@ -13,26 +13,37 @@ from northward.config.base import Document, Money, Rate, StrictModel
 class LiquidityFloor(StrictModel):
     """Year-end liquid assets (unswept cash plus cash and brokerage accounts) must stay at or above `amount`."""
 
-    amount: Money  # today's (start-year) dollars
-    start: Anchor | None = None  # first year the floor applies (default: the first simulated year)
+    amount: Money
+    """The floor, in today's dollars."""
+    start: Anchor | None = None
+    """The first year the floor applies. Default: the start of the plan."""
 
 
 class SuccessCriteria(StrictModel):
     """A path succeeds when every enabled criterion holds in every simulated year."""
 
-    no_shortfall: bool = True  # spending and taxes are always fully funded...
-    shortfall_tolerance: Money = 1.0  # ...ignoring a yearly shortfall up to this many (nominal) dollars
+    no_shortfall: bool = True
+    """Fail a path in any year spending and taxes aren't fully paid."""
+    shortfall_tolerance: Money = 1.0
+    """Ignore a yearly shortfall up to this many dollars (rounding)."""
     liquidity_floor: LiquidityFloor | None = None
+    """Fail a path if cash plus brokerage falls below a floor at a year end."""
 
 
 class Legacy(StrictModel):
-    # Income tax rate heirs pay on inherited pre-tax money (traditional retirement accounts and HSAs).
+    """How the money left at the end is valued."""
+
     heirs_tax_rate: Rate = 0.25
+    """Income tax rate heirs pay on inherited pre-tax money (traditional retirement accounts and HSAs)."""
 
 
 class GoalsDoc(Document):
+    """What counts as success in Monte Carlo, and how legacy is valued. Every scenario of the profile uses it."""
+
     success: SuccessCriteria = Field(default_factory=SuccessCriteria)
+    """The success criteria."""
     legacy: Legacy = Field(default_factory=Legacy)
+    """How legacy is valued after tax."""
 
     def with_overrides(
         self,

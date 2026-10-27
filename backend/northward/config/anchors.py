@@ -19,22 +19,37 @@ from northward.config.base import Age, Identifier, StrictModel, Year
 
 
 class YearAnchor(StrictModel):
+    """A calendar year."""
+
     year: Year
+    """The calendar year."""
 
 
 class MemberAgeAnchor(StrictModel):
+    """The year a household member reaches an age."""
+
     member: Identifier
+    """A member id from household.yaml."""
     age: Age
+    """May be fractional (62.5), counted in months from the birth month."""
 
 
 class DependentAgeAnchor(StrictModel):
+    """The year a dependent reaches an age."""
+
     dependent: Identifier
+    """A dependent id from household.yaml."""
     age: Age
+    """May be fractional, counted in months from the birth month."""
 
 
 class EventAnchor(StrictModel):
+    """The year of a member's retirement or death."""
+
     event: Literal["retirement", "death"]
+    """A death that doesn't happen within the plan never occurs."""
     member: Identifier
+    """A member id from household.yaml."""
 
 
 def _anchor_tag(value: Any) -> str | None:

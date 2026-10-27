@@ -1,4 +1,4 @@
-"""The FastAPI application (Phase 8). `northward serve` runs it; tests build one with `create_app`.
+"""The FastAPI application. `northward serve` runs it; tests build one with `create_app`.
 
 It's meant for one local user (D17): no authentication, so serve it on localhost only.
 """

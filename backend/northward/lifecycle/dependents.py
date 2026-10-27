@@ -1,4 +1,4 @@
-"""Each dependent's tax status for a year (PLAN.md §4.4), derived from their age at year end."""
+"""Each dependent's tax status for a year (docs/configuration/household.md), derived from their age at year end."""
 
 from __future__ import annotations
 

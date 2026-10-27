@@ -1,4 +1,4 @@
-"""Capital market assumption presets (PLAN.md §4.3)."""
+"""Capital market assumption presets (docs/configuration/rules.md)."""
 
 from __future__ import annotations
 

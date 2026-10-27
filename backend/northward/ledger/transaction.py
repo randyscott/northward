@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 
-# The household's clearing balance (the README's CashBook). Every other endpoint is an account id or an
+# The household's clearing balance. Every other endpoint is an account id or an
 # external label such as "employer", "market", "irs", "spending:<category>", or "salary:<stream>".
 CASH = "cash"
 
@@ -26,7 +26,7 @@ class TaxCategory(str, Enum):
     QUALIFIED_DIVIDEND = "qualified_dividend"
     LONG_TERM_GAIN = "long_term_gain"  # may be negative (a realized loss)
     TAX_FREE = "tax_free"
-    SOCIAL_SECURITY = "social_security"  # gross benefits; the taxable share is computed (Phase 4 pays them)
+    SOCIAL_SECURITY = "social_security"  # gross benefits; the taxable share is computed
     IRA_DEDUCTION = "ira_deduction"  # deductible traditional IRA contribution (reduces AGI)
     EARLY_DISTRIBUTION = "early_distribution"  # base for the early-withdrawal additional tax
     PLAN_529_NON_QUALIFIED = "plan_529_non_qualified"  # earnings base for the 529 additional tax

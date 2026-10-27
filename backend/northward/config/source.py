@@ -1,4 +1,4 @@
-"""Where configuration documents come from. The loader only sees `ConfigSource`, never file paths (PLAN.md D13).
+"""Where configuration documents come from. The loader only sees `ConfigSource`, never file paths (docs/decisions.md D13).
 
 `FileSource` reads the `data/` tree; `MemorySource` holds documents in memory (tests, API validation);
 `northward.persistence.source.DbSource` reads the database.
@@ -51,7 +51,7 @@ class RawDocument:
 
 
 def rule_set_name(federal_tax_text: str) -> str:
-    """A rule set is named for its tax year, the `metadata.base_year` of its federal tax rules (PLAN.md D16)."""
+    """A rule set is named for its tax year, the `metadata.base_year` of its federal tax rules (docs/decisions.md D16)."""
     try:
         year = (yaml.safe_load(federal_tax_text) or {})["metadata"]["base_year"]
     except (yaml.YAMLError, KeyError, TypeError) as error:

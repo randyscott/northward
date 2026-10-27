@@ -1,7 +1,7 @@
 """Request and response bodies of the HTTP API.
 
 Configuration documents themselves aren't redeclared here: they travel as YAML text (`yaml_text`) or as the parsed
-data (`data`) the Phase 1 models validate. Those models appear in the OpenAPI schema under their own names (e.g.
+data (`data`) the configuration models validate. Those models appear in the OpenAPI schema under their own names (e.g.
 `AccountsDoc`), so generated client types describe `data` exactly.
 """
 

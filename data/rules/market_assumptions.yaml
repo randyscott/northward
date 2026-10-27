@@ -1,4 +1,4 @@
-# Capital market assumption presets (PLAN.md §4.3). Means and standard deviations are annual, arithmetic, and nominal.
+# Capital market assumption presets (docs/configuration/rules.md). Means and standard deviations are annual, arithmetic, and nominal.
 # A scenario selects a preset with `market: {preset: <id>}` and may override single values.
 # Factor distributions: lognormal (default), normal, or student_t (with the preset's degrees_of_freedom).
 schema_version: 1

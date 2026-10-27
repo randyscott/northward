@@ -1,1 +1,1 @@
-"""Mortality, survivor transitions, and healthcare costs (Phase 5)."""
+"""Mortality, survivor transitions, and healthcare costs."""

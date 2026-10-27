@@ -1,4 +1,4 @@
-"""Writing structured (JSON-like) data back into a YAML document without losing its comments (PLAN.md D18).
+"""Writing structured (JSON-like) data back into a YAML document without losing its comments (docs/decisions.md D18).
 
 `merge_into_yaml(text, data)` returns `text` with its values replaced by `data`: unchanged values keep their exact
 formatting, comments, and key order; new keys are appended; keys missing from `data` are removed. List items that

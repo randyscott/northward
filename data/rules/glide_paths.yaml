@@ -1,4 +1,4 @@
-# Target-date glide paths (PLAN.md §4.2). Equity share is `start_equity` until `years_before` the target year,
+# Target-date glide paths (docs/configuration/rules.md). Equity share is `start_equity` until `years_before` the target year,
 # then declines linearly to `target_equity` at the target year, then holds flat (or follows `post_target`).
 schema_version: 1
 
